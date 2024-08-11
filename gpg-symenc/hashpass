@@ -1,0 +1,19 @@
+#!/bin/bash
+
+SALT1="salt 1"
+SALT2="salt 2"
+
+echo -n "Password:"
+read -s PASSWORD
+echo
+
+echo -n "Verify:"
+read -s VERIFY
+echo
+
+if [[ "${PASSWORD}" != "${VERIFY}" ]]; then
+	exit 1
+fi
+
+PWHASH=$(echo -n "${SALT1}:${PASSWORD}:${SALT2}" | sha256sum -b -)
+echo ${PWHASH:0:64}

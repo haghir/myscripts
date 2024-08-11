@@ -1,0 +1,32 @@
+#!/bin/bash
+
+TXTPATH="${1}"
+ASCPATH="${TXTPATH%.txt}.asc"
+SALT1="salt 1"
+SALT2="salt 2"
+PWHASH="password hash"
+
+echo -n "Password:" 1>&2
+read -s PASSWORD
+echo 1>&2
+
+PWHASH2=$(echo -n "${SALT1}:${PASSWORD}:${SALT2}" | sha256sum -b -)
+PWHASH2=${PWHASH2:0:64}
+
+if [[ "${PWHASH2}" != "${PWHASH}" ]] ; then
+	echo "Wrong password" 1>&2
+	exit 1
+fi
+
+if [[ "${TXTPATH}.asc" == "${ASCPATH}" ]] ; then
+	echo "Invalid file name: $TXTPATH" 1>&2
+	exit 2
+fi
+
+if ! gpg --armor --batch --output "${ASCPATH}" --passphrase "${PASSWORD}" --cipher-algo AES256 --no-symkey-cache --symmetric "${TXTPATH}" ; then
+	echo "Failed to encrypt ${TXTPATH} -> ${ASCPATH}" 1>&2
+	exit 3
+fi
+
+chmod 444 "${ASCPATH}"
+rm -f "${TXTPATH}"

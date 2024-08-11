@@ -1,0 +1,16 @@
+#!/bin/bash
+
+ASCPATH="${1}"
+TXTPATH="${ASCPATH%.asc}.txt"
+
+if [[ "${ASCPATH}.txt" == "${TXTPATH}" ]] ; then
+	echo "Invalid file name: $ASCPATH" 1>&2
+	exit 1
+fi
+
+if ! gpg --no-symkey-cache --output "${TXTPATH}" --decrypt "${ASCPATH}" ; then
+	echo "Failed to decrypt ${ASCPATH} -> ${TXTPATH}" 1>&2
+	exit 2
+fi
+
+rm -f "${ASCPATH}"
