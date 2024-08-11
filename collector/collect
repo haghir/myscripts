@@ -1,0 +1,56 @@
+#!/bin/bash
+
+if [ ! -d "${COLLECTIONS_ROOT}" ]; then
+	echo "${COLLECTIONS_ROOT} doesn't exists." 1>&2
+	exit 1
+fi
+
+OBJROOT="${COLLECTIONS_ROOT}/.objects"
+
+TS=$(date +%Y%m%d%H%M%S)
+YEAR=${TS:0:4}
+MONTH=${TS:4:2}
+DAY=${TS:6:2}
+TIME=${TS:8:6}
+
+LNDIR="${COLLECTIONS_ROOT}/${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
+PREFIX="${LNDIR}/${YEAR}${MONTH}${DAY}-${TIME}"
+
+idx=1
+find . -mindepth 1 -maxdepth 1 -type f -print0 | while IFS='' read -r -d '' FPATH ; do
+	HASH="$(sha256sum -b "${FPATH}")"
+	HASH1="${HASH:0:2}"
+	HASH2="${HASH:2:4}"
+	HASH3="${HASH:6:24}"
+	HASH4="${HASH:30:34}"
+
+	OBJDIR="${HASH1}/${HASH2}/${HASH3}"
+	OBJPATH="${OBJDIR}/${HASH4}"
+
+	FNAME="$(basename "${FPATH}")"
+	EXT="${FNAME##*.}"
+	if [[ "${EXT}" = "${FNAME}" ]]; then
+		EXT=""
+	else
+		EXT=".${EXT}"
+	fi
+
+	if [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+		echo "${FPATH} already exists." 1>&2
+		continue
+	fi
+
+	mkdir -p "${OBJROOT}/${OBJDIR}"
+	cp "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+
+	while [ -e "${PREFIX}-${idx}"* ]; do
+		idx=$((idx+1))
+	done
+
+	mkdir -p "${LNDIR}"
+	ln -s "../../../.objects/${OBJPATH}${EXT}" "${PREFIX}-${idx}${EXT}"
+
+	echo "${FPATH} was added."
+
+	idx=$((idx+1))
+done
