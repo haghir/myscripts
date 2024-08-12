@@ -17,7 +17,7 @@ LNDIR="${COLLECTIONS_ROOT}/${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
 PREFIX="${LNDIR}/${YEAR}${MONTH}${DAY}-${TIME}"
 
 idx=1
-find . -mindepth 1 -maxdepth 1 -type f -print0 | while IFS='' read -r -d '' FPATH ; do
+find . -mindepth 1 -maxdepth 1 -type f | sort -u | while read -r FPATH ; do
 	echo "adding ${FPATH}"
 
 	HASH="$(sha256sum -b "${FPATH}")"
