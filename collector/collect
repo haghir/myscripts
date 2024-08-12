@@ -18,6 +18,8 @@ PREFIX="${LNDIR}/${YEAR}${MONTH}${DAY}-${TIME}"
 
 idx=1
 find . -mindepth 1 -maxdepth 1 -type f -print0 | while IFS='' read -r -d '' FPATH ; do
+	echo "adding ${FPATH}"
+
 	HASH="$(sha256sum -b "${FPATH}")"
 	HASH1="${HASH:0:2}"
 	HASH2="${HASH:2:4}"
@@ -49,8 +51,6 @@ find . -mindepth 1 -maxdepth 1 -type f -print0 | while IFS='' read -r -d '' FPAT
 
 	mkdir -p "${LNDIR}"
 	ln -s "../../../.objects/${OBJPATH}${EXT}" "${PREFIX}-${idx}${EXT}"
-
-	echo "${FPATH} was added."
 
 	idx=$((idx+1))
 done
