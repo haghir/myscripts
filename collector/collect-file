@@ -51,13 +51,20 @@ else
 	EXT=".${EXT}"
 fi
 
-if [ "${STRICT}" = "yes" ] && [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+DUPLICATED=no
+if [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+	DUPLICATED=yes
+fi
+
+if [ "${STRICT}" = "yes" ] && [ "${DUPLICATED}" = "yes" ]; then
 	echo "${FPATH} already exists." 1>&2
 	exit 5
 fi
 
-mkdir -p "${OBJROOT}/${OBJDIR}"
-cp "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+if [[ "${DUPLICATED}" = "no" ]]; then
+	mkdir -p "${OBJROOT}/${OBJDIR}"
+	cp "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+fi
 
 if [[ "x${LPATH}" != "x" ]]; then
 	LDIR="$(dirname "${LPATH}")"
