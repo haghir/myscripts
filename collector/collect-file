@@ -68,7 +68,13 @@ fi
 
 if [[ "x${LPATH}" != "x" ]]; then
 	LDIR="$(dirname "${LPATH}")"
-	RELPATH="$(realpath -m --relative-to="${LDIR}" ".objects/${OBJPATH}${EXT}")"
 	mkdir -p "${ROOTDIR}/${LDIR}"
+
+	RELPATH=".objects/${OBJPATH}${EXT}"
+	while [[ "${LDIR}" != "." ]]; do
+		RELPATH="../${RELPATH}"
+		LDIR="$(dirname "${LDIR}")"
+	done
+
 	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
 fi
