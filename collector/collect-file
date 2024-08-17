@@ -1,0 +1,65 @@
+#!/bin/bash
+
+ROOTDIR="${COLLECTIONS_ROOT}"
+FPATH=""
+LPATH=""
+
+while getopts d:f:l: OPT; do
+	case ${OPT} in
+		d) ROOTDIR="${OPTARG}";;
+		f) FPATH="${OPTARG}";;
+		l) LPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "A root directory (-d) was not specified." 1>&2
+	exit 2
+fi
+
+if [ ! -f "${FPATH}" ]; then
+	echo "${FPATH} is not a file." 1>&2
+	exit 3
+fi
+
+if [[ "${LPATH:0:1}" = "/" ]]; then
+	echo "A link path (-l) must be a relative path."
+	exit 4
+fi
+
+OBJROOT="${ROOTDIR}/.objects"
+
+echo "Adding ${FPATH}"
+
+HASH="$(sha256sum -b "${FPATH}")"
+HASH1="${HASH:0:2}"
+HASH2="${HASH:2:4}"
+HASH3="${HASH:6:26}"
+HASH4="${HASH:32:32}"
+
+OBJDIR="${HASH1}/${HASH2}/${HASH3}"
+OBJPATH="${OBJDIR}/${HASH4}"
+
+FNAME="$(basename "${FPATH}")"
+EXT="${FNAME##*.}"
+if [[ "${EXT}" = "${FNAME}" ]]; then
+	EXT=""
+else
+	EXT=".${EXT}"
+fi
+
+if [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+	echo "${FPATH} already exists." 1>&2
+	exit 5
+fi
+
+mkdir -p "${OBJROOT}/${OBJDIR}"
+cp "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+
+if [[ "x${LPATH}" != "x" ]]; then
+	LDIR="$(dirname "${LPATH}")"
+	RELPATH="$(realpath -m --relative-to="${LDIR}" ".objects/${OBJPATH}${EXT}")"
+	mkdir -p "${ROOTDIR}/${LDIR}"
+	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
+fi
