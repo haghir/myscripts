@@ -25,7 +25,7 @@ find . -mindepth 1 -maxdepth 1 -type f | sort -u | while read -r FPATH ; do
 		idx=$((idx+1))
 	done
 
-	if ! collect-file -d "${ROOTDIR}" -f "${FNAME}" -l "${PREFIX}-${idx}${EXT}"; then
+	if ! collect-file -s -d "${ROOTDIR}" -f "${FNAME}" -l "${PREFIX}-${idx}${EXT}"; then
 		continue
 	fi
 

@@ -3,12 +3,14 @@
 ROOTDIR="${COLLECTIONS_ROOT}"
 FPATH=""
 LPATH=""
+STRICT=no
 
-while getopts d:f:l: OPT; do
+while getopts d:f:l:s OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		l) LPATH="${OPTARG}";;
+		s) STRICT=yes;;
 		*) exit 1;;
 	esac
 done
@@ -49,7 +51,7 @@ else
 	EXT=".${EXT}"
 fi
 
-if [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+if [ "${STRICT}" = "yes" ] && [ -e "${OBJROOT}/${OBJPATH}"* ]; then
 	echo "${FPATH} already exists." 1>&2
 	exit 5
 fi
