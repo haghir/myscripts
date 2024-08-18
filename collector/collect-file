@@ -3,13 +3,15 @@
 ROOTDIR="${COLLECTIONS_ROOT}"
 FPATH=""
 LPATH=""
+QUIET=no
 STRICT=no
 
-while getopts d:f:l:s OPT; do
+while getopts d:f:l:qs OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		l) LPATH="${OPTARG}";;
+		q) QUIET=yes;;
 		s) STRICT=yes;;
 		*) exit 1;;
 	esac
@@ -32,7 +34,9 @@ fi
 
 OBJROOT="${ROOTDIR}/.objects"
 
-echo "Adding ${FPATH}"
+if [[ "${QUIET}" = "no" ]]; then
+	echo "Adding ${FPATH}"
+fi
 
 HASH="$(sha256sum -b "${FPATH}")"
 HASH="$(echo "${HASH:0:64}" | tr '[:upper:]' '[:lower:]')"
