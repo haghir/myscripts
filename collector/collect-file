@@ -35,6 +35,7 @@ OBJROOT="${ROOTDIR}/.objects"
 echo "Adding ${FPATH}"
 
 HASH="$(sha256sum -b "${FPATH}")"
+HASH="$(echo "${HASH:0:64}" | tr '[:upper:]' '[:lower:]')"
 HASH1="${HASH:0:2}"
 HASH2="${HASH:2:4}"
 HASH3="${HASH:6:26}"
