@@ -26,7 +26,7 @@ if [ ! -f "${FPATH}" ]; then
 fi
 
 if [[ "${LPATH:0:1}" = "/" ]]; then
-	echo "A link path (-l) must be a relative path."
+	echo "A link path (-l) must be a relative path." 1>&2
 	exit 4
 fi
 
