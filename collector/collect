@@ -1,6 +1,15 @@
 #!/bin/bash
 
 ROOTDIR="${COLLECTIONS_ROOT}"
+ADDDIR=""
+
+while getopts a:d: OPT; do
+	case ${OPT} in
+		a) ADDDIR="${OPTARG}";;
+		d) ROOTDIR="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
 
 TS=$(date +%Y%m%d%H%M%S)
 YEAR=${TS:0:4}
@@ -9,7 +18,8 @@ DAY=${TS:6:2}
 TIME=${TS:8:6}
 
 LDIR="${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
-PREFIX="${LDIR}/${YEAR}${MONTH}${DAY}-${TIME}"
+LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
+PREFIX="${LDIR}/${LNAME}"
 
 idx=1
 find . -mindepth 1 -maxdepth 1 -type f | sort -u | while read -r FPATH ; do
@@ -27,6 +37,12 @@ find . -mindepth 1 -maxdepth 1 -type f | sort -u | while read -r FPATH ; do
 
 	if ! collect-file -q -s -d "${ROOTDIR}" -f "${FNAME}" -l "${PREFIX}-${idx}${EXT}"; then
 		continue
+	fi
+
+	if [[ "x${ADDDIR}" != "x" ]]; then
+		if ! collect-file -q -d "${ROOTDIR}" -f "${FNAME}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"; then
+			continue
+		fi
 	fi
 
 	idx=$((idx+1))
