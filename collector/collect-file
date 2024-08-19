@@ -41,8 +41,8 @@ fi
 HASH="$(sha256sum -b "${FPATH}")"
 HASH="$(echo "${HASH:0:64}" | tr '[:upper:]' '[:lower:]')"
 HASH1="${HASH:0:2}"
-HASH2="${HASH:2:4}"
-HASH3="${HASH:6:26}"
+HASH2="${HASH:2:3}"
+HASH3="${HASH:5:27}"
 HASH4="${HASH:32:32}"
 
 OBJDIR="${HASH1}/${HASH2}/${HASH3}"
