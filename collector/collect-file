@@ -68,7 +68,7 @@ fi
 
 if [[ "${DUPLICATED}" = "no" ]]; then
 	mkdir -p "${OBJROOT}/${OBJDIR}"
-	cp "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+	cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
 fi
 
 if [[ "x${LPATH}" != "x" ]]; then
