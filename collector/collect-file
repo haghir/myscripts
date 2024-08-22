@@ -48,16 +48,8 @@ HASH4="${HASH:32:32}"
 OBJDIR="${HASH1}/${HASH2}/${HASH3}"
 OBJPATH="${OBJDIR}/${HASH4}"
 
-FNAME="$(basename "${FPATH}")"
-EXT="${FNAME##*.}"
-if [[ "${EXT}" = "${FNAME}" ]]; then
-	EXT=""
-else
-	EXT=".${EXT}"
-fi
-
 DUPLICATED=no
-if [ -e "${OBJROOT}/${OBJPATH}"* ]; then
+if [ -e "${OBJROOT}/${OBJPATH}" ]; then
 	DUPLICATED=yes
 fi
 
@@ -68,14 +60,14 @@ fi
 
 if [[ "${DUPLICATED}" = "no" ]]; then
 	mkdir -p "${OBJROOT}/${OBJDIR}"
-	cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}${EXT}"
+	cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}"
 fi
 
 if [[ "x${LPATH}" != "x" ]]; then
 	LDIR="$(dirname "${LPATH}")"
 	mkdir -p "${ROOTDIR}/${LDIR}"
 
-	RELPATH=".objects/${OBJPATH}${EXT}"
+	RELPATH=".objects/${OBJPATH}"
 	while [[ "${LDIR}" != "." ]]; do
 		RELPATH="../${RELPATH}"
 		LDIR="$(dirname "${LDIR}")"
