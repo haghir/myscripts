@@ -12,8 +12,8 @@ if [ ! -f "${FPATH}" ]; then
 	exit 2
 fi
 
-MIMETYPE="$(file -b --mime-type "${FPATH}")"
-ENCODING="$(file -b --mime-encoding "${FPATH}")"
+MIMETYPE="$(file -L -b --mime-type "${FPATH}")"
+ENCODING="$(file -L -b --mime-encoding "${FPATH}")"
 
 JSON="\"mime\": $(jq --arg t "${MIMETYPE}" --arg e "${ENCODING}" -n \
    '{ "type": $t, "encoding": $e }')"
