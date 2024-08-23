@@ -15,5 +15,15 @@ fi
 MIMETYPE="$(file -b --mime-type "${FPATH}")"
 ENCODING="$(file -b --mime-encoding "${FPATH}")"
 
-jq --arg t "${MIMETYPE}" --arg e "${ENCODING}" -n \
-   '{ "mime": { "type": $t, "encoding": $e } }'
+JSON="\"mime\": $(jq --arg t "${MIMETYPE}" --arg e "${ENCODING}" -n \
+   '{ "type": $t, "encoding": $e }')"
+
+if [[ "${MIMETYPE}" = "image/"* ]]; then
+	IMGSIZE="$(identify -format "%w %h" "${FPATH}")"
+	IMGW=$(echo "${IMGSIZE}" | awk '{ print $1 }')
+	IMGH=$(echo "${IMGSIZE}" | awk '{ print $2 }')
+	JSON="${JSON}, \"image\": $(jq --arg w ${IMGW} --arg h ${IMGH} -n \
+		'{ "width": $w|tonumber, "height": $h|tonumber }')"
+fi
+
+jq --argjson json "{ ${JSON} }" -n '$json'
