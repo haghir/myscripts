@@ -1,0 +1,19 @@
+#!/bin/bash
+
+FPATH="${1}"
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No input path (-f) was specified." 1>&2
+	exit 1
+fi
+
+if [ ! -f "${FPATH}" ]; then
+	echo "${FPATH} is not a file." 1>&2
+	exit 2
+fi
+
+MIMETYPE="$(file -b --mime-type "${FPATH}")"
+ENCODING="$(file -b --mime-encoding "${FPATH}")"
+
+jq --arg t "${MIMETYPE}" --arg e "${ENCODING}" -n \
+   '{ "mime": { "type": $t, "encoding": $e } }'

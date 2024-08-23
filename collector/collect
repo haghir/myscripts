@@ -11,6 +11,11 @@ while getopts a:d: OPT; do
 	esac
 done
 
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "No root directory (-d) was specified." 1>&2
+	exit 1
+fi
+
 TS=$(date +%Y%m%d%H%M%S)
 YEAR=${TS:0:4}
 MONTH=${TS:4:2}

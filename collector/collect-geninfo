@@ -1,0 +1,23 @@
+#!/bin/bash
+
+ROOTDIR="${COLLECTIONS_ROOT}"
+OVERWRITE=no
+
+while getopts d:w OPT; do
+	case ${OPT} in
+		d) ROOTDIR="${OPTARG}";;
+		w) OVERWRITE=yes;;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "No root directory (-d) was specified." 1>&2
+	exit 1
+fi
+
+find "${ROOTDIR}/.objects" -type f \( -not -name "*.info" -and -not -name ".DS_Store" \) | while read -r FPATH ; do
+	if [ "${OVERWRITE}" = "yes" ] || [ ! -e "${FPATH}.info" ]; then
+		collect-info "${FPATH}" > "${FPATH}.info"
+	fi
+done

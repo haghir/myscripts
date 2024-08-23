@@ -18,18 +18,23 @@ while getopts d:f:l:qs OPT; do
 done
 
 if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "A root directory (-d) was not specified." 1>&2
+	echo "No root directory (-d) was specified." 1>&2
 	exit 2
+fi
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No file path (-f) was specified." 1>&2
+	exit 3
 fi
 
 if [ ! -f "${FPATH}" ]; then
 	echo "${FPATH} is not a file." 1>&2
-	exit 3
+	exit 4
 fi
 
 if [[ "${LPATH:0:1}" = "/" ]]; then
 	echo "A link path (-l) must be a relative path." 1>&2
-	exit 4
+	exit 5
 fi
 
 OBJROOT="${ROOTDIR}/.objects"
@@ -55,12 +60,21 @@ fi
 
 if [ "${STRICT}" = "yes" ] && [ "${DUPLICATED}" = "yes" ]; then
 	echo "${FPATH} already exists." 1>&2
-	exit 5
+	exit 6
 fi
 
 if [[ "${DUPLICATED}" = "no" ]]; then
-	mkdir -p "${OBJROOT}/${OBJDIR}"
-	cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}"
+	if ! mkdir -p "${OBJROOT}/${OBJDIR}"; then
+		echo "Failed to create a directory to store the file." 1>&2
+		exit 7
+	fi
+
+	if ! cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}"; then
+		echo "Failed to copy." 1>&2
+		exit 8
+	fi
+
+	collect-info "${OBJROOT}/${OBJPATH}" > "${OBJROOT}/${OBJPATH}.info"
 fi
 
 if [[ "x${LPATH}" != "x" ]]; then
