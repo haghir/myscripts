@@ -1,0 +1,4 @@
+#!/bin/bash
+
+HASH="${1}"
+echo "${HASH:0:2}/${HASH:2:3}/${HASH:5:27}/${HASH:32:32}"

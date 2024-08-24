@@ -1,0 +1,59 @@
+#!/bin/bash
+
+IDENTIFY_COMMAND="magick identify"
+MOGRIFY_COMMAND="magick mogrify"
+
+ROOTDIR="${COLLECTIONS_ROOT}"
+FPATH=""
+
+while getopts d:f: OPT; do
+	case ${OPT} in
+		d) ROOTDIR="${OPTARG}";;
+		f) FPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "No root directory (-d) was specified." 1>&2
+	exit 1
+fi
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No input path (-f) was specified." 1>&2
+	exit 2
+fi
+
+if [ ! -f "${FPATH}" ]; then
+	echo "${FPATH} is not a file." 1>&2
+	exit 3
+fi
+
+TMPDIR="$(mktemp -d)"
+THUMBPATH="${TMPDIR}/thumbnail.jpg"
+
+if ! ffmpeg -v error -ss 00:00:00 -i "${FPATH}" -frames:v 1 -q:v 1 "${THUMBPATH}"; then
+	echo "Failed to extract a thumbnail image from the video." 1>&2
+	rm -rf "${TMPDIR}"
+	exit 4
+fi
+
+IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${THUMBPATH}")"
+WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
+HEIGHT="$(echo "${IMGSIZE}" | awk '{ print $2 }')"
+
+if [ ${WIDTH} -gt 100 ] || [ ${HEIGHT} -gt 100 ]; then
+	TIMES=""
+	if [[ ${WIDTH} -lt ${HEIGHT} ]]; then
+		TIMES="x"
+	fi
+
+	if ! ${MOGRIFY_COMMAND} -resize "${TIMES}100" -strip "${THUMBPATH}"; then
+		echo "Failed to create a thumbnail." 1>&2
+		rm -rf "${TMPDIR}"
+		exit 5
+	fi
+fi
+
+collect-file -q -h -d "${ROOTDIR}" -f "${THUMBPATH}"
+rm -rf "${TMPDIR}"

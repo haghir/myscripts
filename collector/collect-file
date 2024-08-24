@@ -5,11 +5,13 @@ FPATH=""
 LPATH=""
 QUIET=no
 STRICT=no
+SHOWHASH=no
 
-while getopts d:f:l:qs OPT; do
+while getopts d:f:hl:qs OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
+		h) SHOWHASH=yes;;
 		l) LPATH="${OPTARG}";;
 		q) QUIET=yes;;
 		s) STRICT=yes;;
@@ -43,15 +45,9 @@ if [[ "${QUIET}" = "no" ]]; then
 	echo "Adding ${FPATH}"
 fi
 
-HASH="$(sha256sum -b "${FPATH}")"
-HASH="$(echo "${HASH:0:64}" | tr '[:upper:]' '[:lower:]')"
-HASH1="${HASH:0:2}"
-HASH2="${HASH:2:3}"
-HASH3="${HASH:5:27}"
-HASH4="${HASH:32:32}"
-
-OBJDIR="${HASH1}/${HASH2}/${HASH3}"
-OBJPATH="${OBJDIR}/${HASH4}"
+HASH="$(sha256sum -b "${FPATH}" | awk '{ print $1 }' | tr '[:upper:]' '[:lower:]')"
+OBJPATH="$(collect-objpath "${HASH}")"
+OBJDIR="$(dirname "${OBJPATH}")"
 
 DUPLICATED=no
 if [ -e "${OBJROOT}/${OBJPATH}" ]; then
@@ -88,4 +84,8 @@ if [[ "x${LPATH}" != "x" ]]; then
 	done
 
 	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
+fi
+
+if [[ "${SHOWHASH}" = "yes" ]]; then
+	echo "${HASH}"
 fi

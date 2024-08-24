@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IDENTIFY_COMMAND="magick identify"
+
 FPATH="${1}"
 
 if [[ "x${FPATH}" = "x" ]]; then
@@ -19,7 +21,7 @@ JSON="\"mime\": $(jq --arg t "${MIMETYPE}" --arg e "${ENCODING}" -n \
    '{ "type": $t, "encoding": $e }')"
 
 if [[ "${MIMETYPE}" = "image/"* ]]; then
-	IMGSIZE="$(identify -format "%w %h " "${FPATH}")"
+	IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${FPATH}")"
 
 	if [[ $? -eq 0 ]]; then
 		WIDTH=$(echo "${IMGSIZE}" | awk '{ print $1 }')

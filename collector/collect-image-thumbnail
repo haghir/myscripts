@@ -1,0 +1,61 @@
+#!/bin/bash
+
+IDENTIFY_COMMAND="magick identify"
+CONVERT_COMMAND="magick"
+
+ROOTDIR="${COLLECTIONS_ROOT}"
+FPATH=""
+
+while getopts d:f: OPT; do
+	case ${OPT} in
+		d) ROOTDIR="${OPTARG}";;
+		f) FPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "No root directory (-d) was specified." 1>&2
+	exit 1
+fi
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No input path (-f) was specified." 1>&2
+	exit 2
+fi
+
+if [ ! -f "${FPATH}" ]; then
+	echo "${FPATH} is not a file." 1>&2
+	exit 3
+fi
+
+IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${FPATH}")"
+if [[ $? -ne 0 ]]; then
+	echo "Failed to get the image size." 1>&2
+	exit 4
+fi
+
+WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
+HEIGHT="$(echo "${IMGSIZE}" | awk '{ print $2 }')"
+
+if [ ${WIDTH} -le 100 ] && [ ${HEIGHT} -le 100 ]; then
+	collect-file -q -h -d "${ROOTDIR}" -f "${FPATH}"
+	exit 0
+fi
+
+TMPDIR="$(mktemp -d)"
+THUMBPATH="${TMPDIR}/$(basename "${FPATH}")"
+
+TIMES=""
+if [[ ${WIDTH} -lt ${HEIGHT} ]]; then
+	TIMES="x"
+fi
+
+if ! ${CONVERT_COMMAND} "${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; then
+	echo "Failed to create a thumbnail." 1>&2
+	rm -rf "${TMPDIR}"
+	exit 5
+fi
+
+collect-file -q -h -d "${ROOTDIR}" -f "${THUMBPATH}"
+rm -rf "${TMPDIR}"
