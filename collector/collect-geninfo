@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ROOTDIR="${COLLECTIONS_ROOT}"
-OVERWRITE=no
+REFRESH=no
 
-while getopts d:w OPT; do
+while getopts d:r OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
-		w) OVERWRITE=yes;;
+		r) REFRESH=yes;;
 		*) exit 1;;
 	esac
 done
@@ -17,7 +17,7 @@ if [[ "x${ROOTDIR}" = "x" ]]; then
 fi
 
 find "${ROOTDIR}/.objects" -type f \( -not -name "*.info" -and -not -name ".DS_Store" \) | while read -r FPATH ; do
-	if [ "${OVERWRITE}" = "yes" ] || [ ! -e "${FPATH}.info" ]; then
+	if [ "${REFRESH}" = "yes" ] || [ ! -e "${FPATH}.info" ]; then
 		collect-info "${FPATH}" > "${FPATH}.info"
 	fi
 done
