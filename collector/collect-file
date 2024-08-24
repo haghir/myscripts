@@ -70,6 +70,8 @@ if [[ "${DUPLICATED}" = "no" ]]; then
 		exit 8
 	fi
 
+	chmod 444 "${OBJROOT}/${OBJPATH}"
+
 	collect-info "${OBJROOT}/${OBJPATH}" > "${OBJROOT}/${OBJPATH}.info"
 fi
 
