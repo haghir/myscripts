@@ -16,8 +16,10 @@ if [[ "x${ROOTDIR}" = "x" ]]; then
 	exit 1
 fi
 
-find "${ROOTDIR}/.objects" -type f -not -name "*.*" | while read -r FPATH ; do
-	if [ "${REFRESH}" = "yes" ] || [ ! -e "${FPATH}.info" ]; then
-		collect-info "${FPATH}" > "${FPATH}.info"
+find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
+	FPATH="${IPATH%.info}"
+
+	if [ "${REFRESH}" = "yes" ] || [ ! -e "${FPATH}.thumbnail" ]; then
+		collect-thumbnail -d "${ROOTDIR}" -f "${FPATH}"
 	fi
 done

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+ROOTDIR="${COLLECTIONS_ROOT}"
+FPATH=""
+
+while getopts d:f: OPT; do
+	case ${OPT} in
+		d) ROOTDIR="${OPTARG}";;
+		f) FPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIR}" = "x" ]]; then
+	echo "No root directory (-d) was specified." 1>&2
+	exit 1
+fi
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No file path (-f) was specified." 1>&2
+	exit 2
+fi
+
+MIMETYPE="$(jq -r '.["mime"]["type"]' "${FPATH}.info")"
+if [[ $? -ne 0 ]]; then
+	echo "Failed to parse the information JSON." 1>&2
+	exit 3
+fi
+
+if [[ "${MIMETYPE}" = "image/"* ]]; then
+	THUMBHASH="$(collect-image-thumbnail -d "${ROOTDIR}" -f "${FPATH}")"
+	if [[ $? -eq 0 ]]; then
+		echo -n "${THUMBHASH}" > "${FPATH}.thumbnail"
+	fi
+elif [[ "${MIMETYPE}" = "video/"* ]]; then
+	THUMBHASH="$(collect-video-thumbnail -d "${ROOTDIR}" -f "${FPATH}")"
+	if [[ $? -eq 0 ]]; then
+		echo -n "${THUMBHASH}" > "${FPATH}.thumbnail"
+	fi
+fi

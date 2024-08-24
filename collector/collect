@@ -27,7 +27,7 @@ LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
 PREFIX="${LDIR}/${LNAME}"
 
 idx=1
-find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort -u | while read -r FPATH ; do
+find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
 	FNAME="$(basename "${FPATH}")"
 	EXT="${FNAME##*.}"
 	if [[ "${EXT}" = "${FNAME}" ]]; then
@@ -46,20 +46,7 @@ find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort -u | while 
 	fi
 
 	OBJPATH="${ROOTDIR}/.objects/$(collect-objpath "${HASH}")"
-	MIMETYPE="$(jq -r '.["mime"]["type"]' "${OBJPATH}.info")"
-	if [[ $? -eq 0 ]]; then
-		if [[ "${MIMETYPE}" = "image/"* ]]; then
-			THUMBHASH="$(collect-image-thumbnail -d "${ROOTDIR}" -f "${OBJPATH}")"
-			if [[ $? -eq 0 ]]; then
-				echo -n "${THUMBHASH}" > "${OBJPATH}.thumbnail"
-			fi
-		elif [[ "${MIMETYPE}" = "video/"* ]]; then
-			THUMBHASH="$(collect-video-thumbnail -d "${ROOTDIR}" -f "${OBJPATH}")"
-			if [[ $? -eq 0 ]]; then
-				echo -n "${THUMBHASH}" > "${OBJPATH}.thumbnail"
-			fi
-		fi
-	fi
+	collect-thumbnail -d "${ROOTDIR}" -f "${OBJPATH}"
 
 	if [[ "x${ADDDIR}" != "x" ]]; then
 		collect-file -q -d "${ROOTDIR}" -f "${FNAME}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
