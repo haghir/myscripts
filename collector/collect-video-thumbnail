@@ -38,11 +38,16 @@ fi
 TMPDIR="$(mktemp -d)"
 THUMBPATH="${TMPDIR}/thumbnail.jpg"
 
-if ! ffmpeg -v error -ss 00:00:00 -i "${ROOTDIR}/${FPATH}" -frames:v 1 -q:v 1 "${THUMBPATH}"; then
-	echo "Failed to extract a thumbnail image from the video." 1>&2
-	rm -rf "${TMPDIR}"
-	exit 4
-fi
+FDIR="$(dirname "${ROOTDIR}/${FPATH}")"
+FNAME="$(basename "${FPATH}")"
+
+find "${FDIR}" -type f -name "${FNAME}" | while read -r FPATH2; do
+	if ! ffmpeg -v error -ss 00:00:00 -i "${FPATH2}" -frames:v 1 -q:v 1 "${THUMBPATH}"; then
+		echo "Failed to extract a thumbnail image from the video." 1>&2
+		rm -rf "${TMPDIR}"
+		exit 4
+	fi
+done
 
 IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${THUMBPATH}")"
 WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
