@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOTDIR="${COLLECTIONS_ROOT}"
+ROOTDIRS="${COLLECTIONS_ROOT}"
 FPATH=""
 LPATH=""
 STRICT=no
@@ -8,7 +8,7 @@ SHOWHASH=no
 
 while getopts d:f:hl:s OPT; do
 	case ${OPT} in
-		d) ROOTDIR="${OPTARG}";;
+		d) ROOTDIRS="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		h) SHOWHASH=yes;;
 		l) LPATH="${OPTARG}";;
@@ -17,8 +17,8 @@ while getopts d:f:hl:s OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "No root directory (-d) was specified." 1>&2
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
 	exit 2
 fi
 
@@ -37,6 +37,8 @@ if [[ "${LPATH:0:1}" = "/" ]]; then
 	exit 5
 fi
 
+ROOTDIR="${ROOTDIRS%%:*}"
+
 HASH="$(sha256sum -b "${FPATH}" | awk '{ print $1 }' | tr '[:upper:]' '[:lower:]')"
 OBJPATH="$(collect-objpath "${HASH}")"
 OBJDIR="$(dirname "${OBJPATH}")"
@@ -54,7 +56,7 @@ fi
 
 if [[ "${DUPLICATED}" = "no" ]]; then
 	if ! mkdir -p "${OBJROOT}/${OBJDIR}"; then
-		echo "Failed to create a directory to store the file." 1>&2
+		echo "Failed to create directories to store the file." 1>&2
 		exit 7
 	fi
 
@@ -66,6 +68,9 @@ if [[ "${DUPLICATED}" = "no" ]]; then
 	chmod 444 "${OBJROOT}/${OBJPATH}"
 
 	collect-info "${OBJROOT}/${OBJPATH}" > "${OBJROOT}/${OBJPATH}.info"
+
+	collect-clone -d "${ROOTDIRS}" -f "${OBJROOT}/${OBJPATH}"
+	collect-clone -d "${ROOTDIRS}" -f "${OBJROOT}/${OBJPATH}.info"
 fi
 
 if [[ "x${LPATH}" != "x" ]]; then
@@ -79,6 +84,7 @@ if [[ "x${LPATH}" != "x" ]]; then
 	done
 
 	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
+	collect-clone -d "${ROOTDIRS}" -f "${ROOTDIR}/${LPATH}"
 fi
 
 if [[ "${SHOWHASH}" = "yes" ]]; then

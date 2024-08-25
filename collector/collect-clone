@@ -36,12 +36,7 @@ fi
 
 echo "${ROOTDIRS}" | tr ':' '\n' | while read -r BKROOTDIR; do
 	BKPATH="${BKROOTDIR}/${FPATH}"
-	if [[ -e "${BKPATH}" ]]; then
-		echo "${BKPATH} already exists." 1>&2
-		continue
-	fi
-
 	BKDIR="$(dirname "${BKPATH}")"
 	mkdir -p "${BKDIR}"
-	cp -p --no-dereference "${ROOTDIR}/${FPATH}" "${BKPATH}"
+	cp -f -p -P "${ROOTDIR}/${FPATH}" "${BKPATH}"
 done

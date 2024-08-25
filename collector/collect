@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOTDIR="${COLLECTIONS_ROOT}"
+ROOTDIRS="${COLLECTIONS_ROOT}"
 ADDDIR=""
 VERBOSE=no
 CURRENT_DIR="."
@@ -9,16 +9,18 @@ while getopts a:c:d:v OPT; do
 	case ${OPT} in
 		a) ADDDIR="${OPTARG}";;
 		c) CURRENT_DIR="${OPTARG}";;
-		d) ROOTDIR="${OPTARG}";;
+		d) ROOTDIRS="${OPTARG}";;
 		v) VERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
 
-if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "No root directory (-d) was specified." 1>&2
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
 	exit 1
 fi
+
+ROOTDIR="${ROOTDIRS%%:*}"
 
 TS=$(date +%Y%m%d%H%M%S)
 YEAR=${TS:0:4}
@@ -48,16 +50,16 @@ find "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | s
 		idx=$((idx+1))
 	done
 
-	HASH="$(collect-file -s -h -d "${ROOTDIR}" -f "${FPATH}" -l "${PREFIX}-${idx}${EXT}")"
+	HASH="$(collect-file -s -h -d "${ROOTDIRS}" -f "${FPATH}" -l "${PREFIX}-${idx}${EXT}")"
 	if [[ $? -ne 0 ]]; then
 		continue
 	fi
 
 	OBJPATH="${ROOTDIR}/.objects/$(collect-objpath "${HASH}")"
-	collect-thumbnail -d "${ROOTDIR}" -f "${OBJPATH}"
+	collect-thumbnail -d "${ROOTDIRS}" -f "${OBJPATH}"
 
 	if [[ "x${ADDDIR}" != "x" ]]; then
-		collect-file -d "${ROOTDIR}" -f "${FPATH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
+		collect-file -d "${ROOTDIRS}" -f "${FPATH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
 	fi
 
 	idx=$((idx+1))

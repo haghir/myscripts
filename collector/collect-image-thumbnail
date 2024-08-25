@@ -1,18 +1,18 @@
 #!/bin/bash
 
-ROOTDIR="${COLLECTIONS_ROOT}"
+ROOTDIRS="${COLLECTIONS_ROOT}"
 FPATH=""
 
 while getopts d:f: OPT; do
 	case ${OPT} in
-		d) ROOTDIR="${OPTARG}";;
+		d) ROOTDIRS="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		*) exit 1;;
 	esac
 done
 
-if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "No root directory (-d) was specified." 1>&2
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
 	exit 1
 fi
 
@@ -43,7 +43,7 @@ WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
 HEIGHT="$(echo "${IMGSIZE}" | awk '{ print $2 }')"
 
 if [ ${WIDTH} -le 100 ] && [ ${HEIGHT} -le 100 ]; then
-	collect-file -h -d "${ROOTDIR}" -f "${FPATH}"
+	collect-file -h -d "${ROOTDIRS}" -f "${FPATH}"
 	exit 0
 fi
 
@@ -61,5 +61,5 @@ if ! ${CONVERT_COMMAND} "${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; 
 	exit 5
 fi
 
-collect-file -h -d "${ROOTDIR}" -f "${THUMBPATH}"
+collect-file -h -d "${ROOTDIRS}" -f "${THUMBPATH}"
 rm -rf "${TMPDIR}"

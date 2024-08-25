@@ -1,22 +1,24 @@
 #!/bin/bash
 
-ROOTDIR="${COLLECTIONS_ROOT}"
+ROOTDIRS="${COLLECTIONS_ROOT}"
 REFRESH=no
 VERBOSE=no
 
 while getopts d:rv OPT; do
 	case ${OPT} in
-		d) ROOTDIR="${OPTARG}";;
+		d) ROOTDIRS="${OPTARG}";;
 		r) REFRESH=yes;;
 		v) VERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
 
-if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "No root directory (-d) was specified." 1>&2
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
 	exit 1
 fi
+
+ROOTDIR="${ROOTDIRS%%:*}"
 
 find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
 	FPATH="${IPATH%.info}"
@@ -26,6 +28,6 @@ find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
 			echo "Generating ${FPATH}.thumbnail"
 		fi
 
-		collect-thumbnail -d "${ROOTDIR}" -f "${FPATH}"
+		collect-thumbnail -d "${ROOTDIRS}" -f "${FPATH}"
 	fi
 done

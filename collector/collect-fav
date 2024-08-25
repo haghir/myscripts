@@ -1,24 +1,24 @@
 #!/bin/bash
 
-ROOTDIR="${COLLECTIONS_ROOT}"
+ROOTDIRS="${COLLECTIONS_ROOT}"
 VERBOSE=no
 WKDIR="$(pwd)"
 
 while getopts d:v OPT; do
 	case ${OPT} in
-		d) ROOTDIR="${OPTARG}";;
+		d) ROOTDIRS="${OPTARG}";;
 		v) VERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
 
-if [[ "x${ROOTDIR}" = "x" ]]; then
-	echo "No root directory (-d) was specified." 1>&2
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
 	exit 1
 fi
 
 find "${WKDIR}" -mindepth 1 -maxdepth 1 -type d | while read -r DPATH ; do
-	collect -c "${DPATH}" -d "${ROOTDIR}" -a "fav/$(basename "${DPATH}")"
+	collect -c "${DPATH}" -d "${ROOTDIRS}" -a "fav/$(basename "${DPATH}")"
 done
 
-collect -c "${WKDIR}" -d "${ROOTDIR}"
+collect -c "${WKDIR}" -d "${ROOTDIRS}"
