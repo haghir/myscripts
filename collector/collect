@@ -3,10 +3,12 @@
 ROOTDIR="${COLLECTIONS_ROOT}"
 ADDDIR=""
 VERBOSE=no
+CURRENT_DIR="."
 
-while getopts a:d:v OPT; do
+while getopts a:c:d:v OPT; do
 	case ${OPT} in
 		a) ADDDIR="${OPTARG}";;
+		c) CURRENT_DIR="${OPTARG}";;
 		d) ROOTDIR="${OPTARG}";;
 		v) VERBOSE=yes;;
 		*) exit 1;;
@@ -29,7 +31,7 @@ LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
 PREFIX="${LDIR}/${LNAME}"
 
 idx=1
-find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
+find "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
 	if [[ "${VERBOSE}" = "yes" ]]; then
 		echo "Adding ${FPATH}"
 	fi
