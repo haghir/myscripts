@@ -1,0 +1,42 @@
+#!/bin/bash
+
+ROOTDIRS="${COLLECTIONS_ROOT}"
+FPATH=""
+
+while getopts d:f: OPT; do
+	case ${OPT} in
+		d) ROOTDIRS="${OPTARG}";;
+		f) FPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "x${ROOTDIRS}" = "x" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
+	exit 2
+fi
+
+if [[ "x${FPATH}" = "x" ]]; then
+	echo "No file path (-f) was specified." 1>&2
+	exit 3
+fi
+
+ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIRS="${ROOTDIRS#*:}"
+
+if [[ "${ROOTDIR}" = "${ROOTDIRS}" ]]; then
+	# ROOTDIRS has just one directory.
+	exit 0
+fi
+
+if [ ! -f "${ROOTDIR}/${FPATH}" ]; then
+	echo "${ROOTDIR}/${FPATH} is not a file." 1>&2
+	exit 4
+fi
+
+echo "${ROOTDIRS}" | tr ':' '\n' | while read -r BKROOTDIR; do
+	BKPATH="${BKROOTDIR}/${FPATH}"
+	BKDIR="$(dirname "${BKPATH}")"
+	mkdir -p "${BKDIR}"
+	cp -p --no-dereference "${ROOTDIR}/${FPATH}" "${BKPATH}"
+done
