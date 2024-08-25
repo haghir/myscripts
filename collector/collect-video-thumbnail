@@ -55,5 +55,5 @@ if [ ${WIDTH} -gt 100 ] || [ ${HEIGHT} -gt 100 ]; then
 	fi
 fi
 
-collect-file -q -h -d "${ROOTDIR}" -f "${THUMBPATH}"
+collect-file -h -d "${ROOTDIR}" -f "${THUMBPATH}"
 rm -rf "${TMPDIR}"

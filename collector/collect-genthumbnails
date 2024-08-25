@@ -2,11 +2,13 @@
 
 ROOTDIR="${COLLECTIONS_ROOT}"
 REFRESH=no
+VERBOSE=no
 
-while getopts d:r OPT; do
+while getopts d:rv OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
 		r) REFRESH=yes;;
+		v) VERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
@@ -20,6 +22,10 @@ find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
 	FPATH="${IPATH%.info}"
 
 	if [ "${REFRESH}" = "yes" ] || [ ! -e "${FPATH}.thumbnail" ]; then
+		if [[ "${VERBOSE}" = "yes" ]]; then
+			echo "Generating ${FPATH}.thumbnail"
+		fi
+
 		collect-thumbnail -d "${ROOTDIR}" -f "${FPATH}"
 	fi
 done

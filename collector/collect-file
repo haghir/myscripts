@@ -3,17 +3,15 @@
 ROOTDIR="${COLLECTIONS_ROOT}"
 FPATH=""
 LPATH=""
-QUIET=no
 STRICT=no
 SHOWHASH=no
 
-while getopts d:f:hl:qs OPT; do
+while getopts d:f:hl:s OPT; do
 	case ${OPT} in
 		d) ROOTDIR="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		h) SHOWHASH=yes;;
 		l) LPATH="${OPTARG}";;
-		q) QUIET=yes;;
 		s) STRICT=yes;;
 		*) exit 1;;
 	esac
@@ -39,15 +37,10 @@ if [[ "${LPATH:0:1}" = "/" ]]; then
 	exit 5
 fi
 
-OBJROOT="${ROOTDIR}/.objects"
-
-if [[ "${QUIET}" = "no" ]]; then
-	echo "Adding ${FPATH}"
-fi
-
 HASH="$(sha256sum -b "${FPATH}" | awk '{ print $1 }' | tr '[:upper:]' '[:lower:]')"
 OBJPATH="$(collect-objpath "${HASH}")"
 OBJDIR="$(dirname "${OBJPATH}")"
+OBJROOT="${ROOTDIR}/.objects"
 
 DUPLICATED=no
 if [ -e "${OBJROOT}/${OBJPATH}" ]; then

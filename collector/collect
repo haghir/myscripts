@@ -2,11 +2,13 @@
 
 ROOTDIR="${COLLECTIONS_ROOT}"
 ADDDIR=""
+VERBOSE=no
 
-while getopts a:d: OPT; do
+while getopts a:d:v OPT; do
 	case ${OPT} in
 		a) ADDDIR="${OPTARG}";;
 		d) ROOTDIR="${OPTARG}";;
+		v) VERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
@@ -28,6 +30,10 @@ PREFIX="${LDIR}/${LNAME}"
 
 idx=1
 find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
+	if [[ "${VERBOSE}" = "yes" ]]; then
+		echo "Adding ${FPATH}"
+	fi
+
 	FNAME="$(basename "${FPATH}")"
 	EXT="${FNAME##*.}"
 	if [[ "${EXT}" = "${FNAME}" ]]; then
@@ -40,7 +46,7 @@ find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while rea
 		idx=$((idx+1))
 	done
 
-	HASH="$(collect-file -q -s -h -d "${ROOTDIR}" -f "${FNAME}" -l "${PREFIX}-${idx}${EXT}")"
+	HASH="$(collect-file -s -h -d "${ROOTDIR}" -f "${FNAME}" -l "${PREFIX}-${idx}${EXT}")"
 	if [[ $? -ne 0 ]]; then
 		continue
 	fi
@@ -49,7 +55,7 @@ find . -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while rea
 	collect-thumbnail -d "${ROOTDIR}" -f "${OBJPATH}"
 
 	if [[ "x${ADDDIR}" != "x" ]]; then
-		collect-file -q -d "${ROOTDIR}" -f "${FNAME}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
+		collect-file -d "${ROOTDIR}" -f "${FNAME}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
 	fi
 
 	idx=$((idx+1))

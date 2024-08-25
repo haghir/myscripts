@@ -39,7 +39,7 @@ WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
 HEIGHT="$(echo "${IMGSIZE}" | awk '{ print $2 }')"
 
 if [ ${WIDTH} -le 100 ] && [ ${HEIGHT} -le 100 ]; then
-	collect-file -q -h -d "${ROOTDIR}" -f "${FPATH}"
+	collect-file -h -d "${ROOTDIR}" -f "${FPATH}"
 	exit 0
 fi
 
@@ -57,5 +57,5 @@ if ! ${CONVERT_COMMAND} "${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; 
 	exit 5
 fi
 
-collect-file -q -h -d "${ROOTDIR}" -f "${THUMBPATH}"
+collect-file -h -d "${ROOTDIR}" -f "${THUMBPATH}"
 rm -rf "${TMPDIR}"
