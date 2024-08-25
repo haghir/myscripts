@@ -1,7 +1,5 @@
 #!/bin/bash
 
-IDENTIFY_COMMAND="magick identify"
-
 FPATH="${1}"
 
 if [[ "x${FPATH}" = "x" ]]; then
@@ -12,6 +10,11 @@ fi
 if [ ! -f "${FPATH}" ]; then
 	echo "${FPATH} is not a file." 1>&2
 	exit 2
+fi
+
+IDENTIFY_COMMAND="magick identify"
+if ! which magick > /dev/null 2>&1 ; then
+	IDENTIFY_COMMAND="identify"
 fi
 
 MIMETYPE="$(file -L -b --mime-type "${FPATH}")"
