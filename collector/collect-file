@@ -69,8 +69,8 @@ if [[ "${DUPLICATED}" = "no" ]]; then
 
 	collect-info "${OBJROOT}/${OBJPATH}" > "${OBJROOT}/${OBJPATH}.info"
 
-	collect-clone -d "${ROOTDIRS}" -f "${OBJROOT}/${OBJPATH}"
-	collect-clone -d "${ROOTDIRS}" -f "${OBJROOT}/${OBJPATH}.info"
+	collect-clone -d "${ROOTDIRS}" -f ".objects/${OBJPATH}"
+	collect-clone -d "${ROOTDIRS}" -f ".objects/${OBJPATH}.info"
 fi
 
 if [[ "x${LPATH}" != "x" ]]; then
@@ -84,7 +84,7 @@ if [[ "x${LPATH}" != "x" ]]; then
 	done
 
 	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
-	collect-clone -d "${ROOTDIRS}" -f "${ROOTDIR}/${LPATH}"
+	collect-clone -d "${ROOTDIRS}" -f "${LPATH}"
 fi
 
 if [[ "${SHOWHASH}" = "yes" ]]; then

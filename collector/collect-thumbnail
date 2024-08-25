@@ -21,22 +21,29 @@ if [[ "x${FPATH}" = "x" ]]; then
 	exit 3
 fi
 
-MIMETYPE="$(jq -r '.["mime"]["type"]' "${FPATH}.info")"
+ROOTDIR="${ROOTDIRS%%:*}"
+
+MIMETYPE="$(jq -r '.["mime"]["type"]' "${ROOTDIR}/${FPATH}.info")"
 if [[ $? -ne 0 ]]; then
 	echo "Failed to parse the information JSON." 1>&2
 	exit 4
 fi
 
+function mklink()
+{
+	THUMBHASH="${1}"
+	echo -n "${THUMBHASH}" > "${ROOTDIR}/${FPATH}.thumbnail"
+	collect-clone -d "${ROOTDIRS}" -f "${FPATH}.thumbnail"
+}
+
 if [[ "${MIMETYPE}" = "image/"* ]]; then
 	THUMBHASH="$(collect-image-thumbnail -d "${ROOTDIRS}" -f "${FPATH}")"
 	if [[ $? -eq 0 ]]; then
-		echo -n "${THUMBHASH}" > "${FPATH}.thumbnail"
-		collect-clone -d "${ROOTDIRS}" -f "${FPATH}.thumbnail"
+		mklink "${THUMBHASH}"
 	fi
 elif [[ "${MIMETYPE}" = "video/"* ]]; then
 	THUMBHASH="$(collect-video-thumbnail -d "${ROOTDIRS}" -f "${FPATH}")"
 	if [[ $? -eq 0 ]]; then
-		echo -n "${THUMBHASH}" > "${FPATH}.thumbnail"
-		collect-clone -d "${ROOTDIRS}" -f "${FPATH}.thumbnail"
+		mklink "${THUMBHASH}"
 	fi
 fi

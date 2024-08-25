@@ -28,6 +28,8 @@ find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
 			echo "Generating ${FPATH}.thumbnail"
 		fi
 
-		collect-thumbnail -d "${ROOTDIRS}" -f "${FPATH}"
+		RELPATH=".objects/${FPATH##*/.objects/}"
+
+		collect-thumbnail -d "${ROOTDIRS}" -f "${RELPATH}"
 	fi
 done

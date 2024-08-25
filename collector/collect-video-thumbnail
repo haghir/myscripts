@@ -21,8 +21,10 @@ if [[ "x${FPATH}" = "x" ]]; then
 	exit 2
 fi
 
-if [ ! -f "${FPATH}" ]; then
-	echo "${FPATH} is not a file." 1>&2
+ROOTDIR="${ROOTDIRS%%:*}"
+
+if [ ! -f "${ROOTDIR}/${FPATH}" ]; then
+	echo "${ROOTDIR}/${FPATH} is not a file." 1>&2
 	exit 3
 fi
 
@@ -36,7 +38,7 @@ fi
 TMPDIR="$(mktemp -d)"
 THUMBPATH="${TMPDIR}/thumbnail.jpg"
 
-if ! ffmpeg -v error -ss 00:00:00 -i "${FPATH}" -frames:v 1 -q:v 1 "${THUMBPATH}"; then
+if ! ffmpeg -v error -ss 00:00:00 -i "${ROOTDIR}/${FPATH}" -frames:v 1 -q:v 1 "${THUMBPATH}"; then
 	echo "Failed to extract a thumbnail image from the video." 1>&2
 	rm -rf "${TMPDIR}"
 	exit 4

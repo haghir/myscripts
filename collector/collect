@@ -55,8 +55,7 @@ find "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | s
 		continue
 	fi
 
-	OBJPATH="${ROOTDIR}/.objects/$(collect-objpath "${HASH}")"
-	collect-thumbnail -d "${ROOTDIRS}" -f "${OBJPATH}"
+	collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
 
 	if [[ "x${ADDDIR}" != "x" ]]; then
 		collect-file -d "${ROOTDIRS}" -f "${FPATH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"

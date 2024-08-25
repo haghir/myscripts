@@ -21,8 +21,10 @@ if [[ "x${FPATH}" = "x" ]]; then
 	exit 2
 fi
 
-if [ ! -f "${FPATH}" ]; then
-	echo "${FPATH} is not a file." 1>&2
+ROOTDIR="${ROOTDIRS%%:*}"
+
+if [ ! -f "${ROOTDIR}/${FPATH}" ]; then
+	echo "${ROOTDIR}/${FPATH} is not a file." 1>&2
 	exit 3
 fi
 
@@ -33,7 +35,7 @@ if ! which magick > /dev/null 2>&1 ; then
 	CONVERT_COMMAND="convert"
 fi
 
-IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${FPATH}")"
+IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${ROOTDIR}/${FPATH}")"
 if [[ $? -ne 0 ]]; then
 	echo "Failed to get the image size." 1>&2
 	exit 4
@@ -43,19 +45,19 @@ WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
 HEIGHT="$(echo "${IMGSIZE}" | awk '{ print $2 }')"
 
 if [ ${WIDTH} -le 100 ] && [ ${HEIGHT} -le 100 ]; then
-	collect-file -h -d "${ROOTDIRS}" -f "${FPATH}"
+	collect-file -h -d "${ROOTDIRS}" -f "${ROOTDIR}/${FPATH}"
 	exit 0
 fi
 
 TMPDIR="$(mktemp -d)"
-THUMBPATH="${TMPDIR}/$(basename "${FPATH}")"
+THUMBPATH="${TMPDIR}/thumbnail)"
 
 TIMES=""
 if [[ ${WIDTH} -lt ${HEIGHT} ]]; then
 	TIMES="x"
 fi
 
-if ! ${CONVERT_COMMAND} "${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; then
+if ! ${CONVERT_COMMAND} "${ROOTDIR}/${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; then
 	echo "Failed to create a thumbnail." 1>&2
 	rm -rf "${TMPDIR}"
 	exit 5

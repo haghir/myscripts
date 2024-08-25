@@ -26,7 +26,9 @@ find "${ROOTDIR}/.objects" -type f -not -name "*.*" | while read -r FPATH ; do
 			echo "Generating ${FPATH}.info"
 		fi
 
+		RELPATH=".objects/${FPATH##*/.objects/}"
+
 		collect-info "${FPATH}" > "${FPATH}.info"
-		collect-clone -d "${ROOTDIRS}" -f "${FPATH}.info"
+		collect-clone -d "${ROOTDIRS}" -f "${RELPATH}.info"
 	fi
 done
