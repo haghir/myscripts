@@ -40,6 +40,12 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 	THUMBS="${TMPDIR}/${ROOTIDX}/thumbs.txt"
 	REFERRERS="${TMPDIR}/${ROOTIDX}/referrers.txt"
 
+	touch "${OBJLOG}"
+	touch "${LNKLOG}"
+	touch "${ERRLOG}"
+	touch "${THUMBS}"
+	touch "${REFERRERS}"
+
 	collect-find-objects -d "${ROOTDIR}" | while read -r OBJPATH; do
 		HASH="${OBJPATH##*/.objects/}"
 		HASH="${HASH//\//}"
@@ -127,26 +133,18 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 	done
 
 	collect-find-links -d "${ROOTDIR}" | while read -r LNPATH; do
-		LINKS=$((LINKS+1))
-
-		REFPATH="$(readlink "${LNPATH}")"
-		if [[ $? -ne 0 ]]; then
-			echo "${LNPATH}: invalid link" | tee -a "${ERRLOG}" 1>&2
-			continue
-		fi
-
-		REFPATH="$(realpath "${REFPATH}")"
-		if [ $? -ne 0 ] || [ -f "${}" ]; then
+		REALPATH="$(realpath "${LNPATH}")"
+		if [ $? -ne 0 ] || [ ! -f "${REALPATH}" ]; then
 			echo "${LNPATH}: not a link to a file" | tee -a "${ERRLOG}" 1>&2
 			continue
 		fi
 
-		if [[ "${REFPATH}" != "${ROOTDIR/.objects/}"* ]]; then
+		if [[ "${REALPATH}" != "${ROOTDIR/.objects/}"* ]]; then
 			# not a link to an object file.
 			continue
 		fi
 
-		HASH="${REFPATH#${ROOTDIR}/.objects/}"
+		HASH="${REALPATH#${ROOTDIR}/.objects/}"
 		HASH="${HASH//\//}"
 		if [[ ! "${HASH}" =~ ^[0-9A-Fa-f]{64}$ ]]; then
 			# not a link to an object file.

@@ -14,7 +14,7 @@ if [[ "${ROOTDIRS}" = "" ]]; then
 	exit 1
 fi
 
-collect-root-dirs -d "${ROOTDIRS}" | while read -r "${ROOTDIR}"; do
+collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 	find -H "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type d -not -name ".objects" -exec find "{}" -type l \;
 	find -H "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type l
 done

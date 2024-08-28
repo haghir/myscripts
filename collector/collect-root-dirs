@@ -18,7 +18,7 @@ fi
 
 echo "${ROOTDIRS}" | tr ':' '\n' | while read -r ROOTDIR; do
 	REALROOTDIR="$(realpath -q "${ROOTDIR}")"
-	if [ $? -ne 0 ] || [ ! -d "${REALROOTDIR}"]; then
+	if [ $? -ne 0 ] || [ ! -d "${REALROOTDIR}" ]; then
 		if [[ "${QUIET}" = "no" ]]; then
 			echo "${ROOTDIR} is not a valid path." 1>&2
 		fi
