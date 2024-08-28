@@ -11,17 +11,21 @@ while getopts d:f: OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
 	exit 2
 fi
 
-if [[ "x${FPATH}" = "x" ]]; then
+if [[ "${FPATH}" = "" ]]; then
 	echo "No file path (-f) was specified." 1>&2
 	exit 3
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 4
+fi
+
 ROOTDIRS="${ROOTDIRS#*:}"
 
 if [[ "${ROOTDIR}" = "${ROOTDIRS}" ]]; then
@@ -31,10 +35,10 @@ fi
 
 if [ ! -f "${ROOTDIR}/${FPATH}" ]; then
 	echo "${ROOTDIR}/${FPATH} is not a file." 1>&2
-	exit 4
+	exit 5
 fi
 
-echo "${ROOTDIRS}" | tr ':' '\n' | while read -r BKROOTDIR; do
+collect-root-dirs -d "${ROOTDIRS}" | while read -r BKROOTDIR; do
 	BKPATH="${BKROOTDIR}/${FPATH}"
 	BKDIR="$(dirname "${BKPATH}")"
 	mkdir -p "${BKDIR}"

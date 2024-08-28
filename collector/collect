@@ -15,12 +15,15 @@ while getopts a:c:d:v OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
-	exit 1
+	exit 2
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 3
+fi
 
 TS=$(date +%Y%m%d%H%M%S)
 YEAR=${TS:0:4}
@@ -33,7 +36,7 @@ LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
 PREFIX="${LDIR}/${LNAME}"
 
 idx=1
-find "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
+find -H "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
 	if [[ "${VERBOSE}" = "yes" ]]; then
 		echo "Adding ${FPATH}"
 	fi
@@ -57,7 +60,7 @@ find "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | s
 
 	collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
 
-	if [[ "x${ADDDIR}" != "x" ]]; then
+	if [[ "${ADDDIR}" != "" ]]; then
 		collect-file -d "${ROOTDIRS}" -f "${FPATH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
 	fi
 

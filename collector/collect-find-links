@@ -1,0 +1,20 @@
+#!/bin/bash
+
+ROOTDIRS="${COLLECTIONS_ROOT}"
+
+while getopts d: OPT; do
+	case ${OPT} in
+		d) ROOTDIRS="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "${ROOTDIRS}" = "" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
+	exit 1
+fi
+
+collect-root-dirs -d "${ROOTDIRS}" | while read -r "${ROOTDIR}"; do
+	find -H "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type d -not -name ".objects" -exec find "{}" -type l \;
+	find -H "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type l
+done

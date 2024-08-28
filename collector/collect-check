@@ -1,0 +1,177 @@
+#!/bin/bash
+
+ROOTDIRS="${COLLECTIONS_ROOT}"
+VERBOSE=no
+
+while getopts d:v OPT; do
+	case ${OPT} in
+		d) ROOTDIRS="${OPTARG}";;
+		v) VERBOSE=yes;;
+		*) exit 1;;
+	esac
+done
+
+if [[ "${ROOTDIRS}" = "" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
+	exit 1
+fi
+
+ROOTIDX=0
+TMPDIR=$(mktemp -d)
+
+function print_count()
+{
+	find "${TMPDIR}" -type f -name "${1}" -execdir wc -l "{}" \; | awk '{ print $1 }' | {
+		SUM=0
+		while read -r NUM; do
+			SUM=$((SUM+NUM))
+		done
+		echo "${SUM} ${2}"
+	}
+}
+
+collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
+	ROOTIDX=$((ROOTIDX+1))
+	mkdir "${TMPDIR}/${ROOTIDX}"
+
+	OBJLOG="${TMPDIR}/${ROOTIDX}/objects.txt"
+	LNKLOG="${TMPDIR}/${ROOTIDX}/links.txt"
+	ERRLOG="${TMPDIR}/${ROOTIDX}/errors.txt"
+	THUMBS="${TMPDIR}/${ROOTIDX}/thumbs.txt"
+	REFERRERS="${TMPDIR}/${ROOTIDX}/referrers.txt"
+
+	collect-find-objects -d "${ROOTDIR}" | while read -r OBJPATH; do
+		HASH="${OBJPATH##*/.objects/}"
+		HASH="${HASH//\//}"
+
+		if [[ "${VERBOSE}" = "yes" ]]; then
+			echo "${HASH} ${OBJPATH}" | tee -a "${OBJLOG}"
+		else
+			echo "${HASH} ${OBJPATH}" >> "${OBJLOG}"
+		fi
+
+		if ! echo "${HASH} *${OBJPATH}" | sha256sum --check --quiet > /dev/null 2>&1; then
+			echo "${OBJPATH}: hash mismatch" | tee -a "${ERRLOG}" 1>&2
+		fi
+
+		MIMETYPE=""
+		if [ -f "${OBJPATH}.info" ]; then
+			MIMETYPE="$(jq '.["mime"]["type"]' "${OBJPATH}.info")"
+			if [[ $? -ne 0 ]]; then
+				echo "${OBJPATH}.info: no MIME type" | tee -a "${ERRLOG}" 1>&2
+				MIMETYPE=""
+			fi
+
+			if ! jq '.["mime"]["encoding"]' "${OBJPATH}.info" > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: no MIME encoding" | tee -a "${ERRLOG}" 1>&2
+			fi
+		else
+			echo "${OBJPATH}: no info file" 1>&2
+		fi
+
+		IMAGEJSON=""
+		if [[ "${MIMETYPE}" = "image/"* ]]; then
+			IMAGEJSON="$(jq '.["image"]' "${OBJPATH}.info")"
+			if [[ $? -ne 0 ]]; then
+				echo "${OBJPATH}.info: no image section" | tee -a "${ERRLOG}" 1>&2
+				IMAGEJSON=""
+			fi
+		fi
+
+		if [[ "${IMAGEJSON}" != "" ]]; then
+			if ! echo "${IMAGEJSON}" | jq '.["width"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid image width" | tee -a "${ERRLOG}" 1>&2
+			fi
+
+			if ! echo "${IMAGEJSON}" | jq '.["height"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid image height" | tee -a "${ERRLOG}" 1>&2
+			fi
+		fi
+
+		VIDEOJSON=""
+		if [[ "${MIMETYPE}" = "image/"* ]]; then
+			VIDEOJSON="$(jq '.["video"]' "${OBJPATH}.info")"
+			if [[ $? -ne 0 ]]; then
+				echo "${OBJPATH}.info: no video section" | tee -a "${ERRLOG}" 1>&2
+				VIDEOJSON=""
+			fi
+		fi
+
+		if [[ "${VIDEOJSON}" != "" ]]; then
+			if ! echo "${VIDEOJSON}" | jq '.["width"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid video width" | tee -a "${ERRLOG}" 1>&2
+			fi
+
+			if ! echo "${VIDEOJSON}" | jq '.["height"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid video height" | tee -a "${ERRLOG}" 1>&2
+			fi
+
+			if ! echo "${VIDEOJSON}" | jq '.["format_name"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid format_name width" | tee -a "${ERRLOG}" 1>&2
+			fi
+
+			if ! echo "${VIDEOJSON}" | jq '.["format_long_name"]' > /dev/null 2>&1; then
+				echo "${OBJPATH}.info: invalid format_long_name height" | tee -a "${ERRLOG}" 1>&2
+			fi
+		fi
+
+		if [ -f "${OBJPATH}.thumbnail" ]; then
+			THUMBHASH="$(cat "${OBJPATH}.thumbnail")"
+			THUMBPATH="${ROOTDIR}/.objects/$(collect-objpath "${THUMBHASH}")"
+			if [ -f "${THUMBPATH}" ]; then
+				echo "${THUMBHASH}" >> "${THUMBS}"
+			else
+				echo "${OBJPATH}.thumbnail: no thumbnail" | tee -a "${ERRLOG}" 1>&2
+			fi
+		fi
+	done
+
+	collect-find-links -d "${ROOTDIR}" | while read -r LNPATH; do
+		LINKS=$((LINKS+1))
+
+		REFPATH="$(readlink "${LNPATH}")"
+		if [[ $? -ne 0 ]]; then
+			echo "${LNPATH}: invalid link" | tee -a "${ERRLOG}" 1>&2
+			continue
+		fi
+
+		REFPATH="$(realpath "${REFPATH}")"
+		if [ $? -ne 0 ] || [ -f "${}" ]; then
+			echo "${LNPATH}: not a link to a file" | tee -a "${ERRLOG}" 1>&2
+			continue
+		fi
+
+		if [[ "${REFPATH}" != "${ROOTDIR/.objects/}"* ]]; then
+			# not a link to an object file.
+			continue
+		fi
+
+		HASH="${REFPATH#${ROOTDIR}/.objects/}"
+		HASH="${HASH//\//}"
+		if [[ ! "${HASH}" =~ ^[0-9A-Fa-f]{64}$ ]]; then
+			# not a link to an object file.
+			continue
+		fi
+
+		if [[ "${VERBOSE}" = "yes" ]]; then
+			echo "${HASH} ${LNPATH}" | tee -a "${LNKLOG}"
+		else
+			echo "${HASH} ${LNPATH}" >> "${LNKLOG}"
+		fi
+	done
+
+	cat "${OBJLOG}" | awk '{ print $1 }' | sort -u > "${OBJLOG}.sorted"
+	cat "${LNKLOG}" "${THUMBS}" | awk '{ print $1 }' | sort -u > "${REFERRERS}.sorted"
+
+	diff "${OBJLOG}.sorted" "${REFERRERS}.sorted" | grep '^<' | awk '{ print $2 ": dead object" }'
+done
+
+if [[ "${VERBOSE}" = "yes" ]]; then
+	print_count "objects.txt" "objects"
+	print_count "deadobjs.txt" "dead objects"
+	print_count "thumbs.txt" "thumbnails"
+	print_count "links.txt" "links"
+	print_count "errors.txt" "errors"
+fi
+
+rm -rf "${TMPDIR}"

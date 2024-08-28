@@ -13,14 +13,17 @@ while getopts d:rv OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
-	exit 1
+	exit 2
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 3
+fi
 
-find "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
+find -H "${ROOTDIR}/.objects" -type f -name "*.info" | while read -r IPATH ; do
 	FPATH="${IPATH%.info}"
 
 	if [ "${REFRESH}" = "yes" ] || [ ! -e "${FPATH}.thumbnail" ]; then

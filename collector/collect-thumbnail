@@ -11,22 +11,25 @@ while getopts d:f: OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
 	exit 2
 fi
 
-if [[ "x${FPATH}" = "x" ]]; then
+if [[ "${FPATH}" = "" ]]; then
 	echo "No file path (-f) was specified." 1>&2
 	exit 3
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 4
+fi
 
 MIMETYPE="$(jq -r '.["mime"]["type"]' "${ROOTDIR}/${FPATH}.info")"
 if [[ $? -ne 0 ]]; then
 	echo "Failed to parse the information JSON." 1>&2
-	exit 4
+	exit 5
 fi
 
 function mklink()

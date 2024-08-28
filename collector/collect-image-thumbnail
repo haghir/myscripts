@@ -11,21 +11,24 @@ while getopts d:f: OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
 	exit 1
 fi
 
-if [[ "x${FPATH}" = "x" ]]; then
+if [[ "${FPATH}" = "" ]]; then
 	echo "No input path (-f) was specified." 1>&2
 	exit 2
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 3
+fi
 
 if [ ! -f "${ROOTDIR}/${FPATH}" ]; then
 	echo "${ROOTDIR}/${FPATH} is not a file." 1>&2
-	exit 3
+	exit 4
 fi
 
 IDENTIFY_COMMAND="magick identify"
@@ -38,7 +41,7 @@ fi
 IMGSIZE="$(${IDENTIFY_COMMAND} -format "%w %h " "${ROOTDIR}/${FPATH}")"
 if [[ $? -ne 0 ]]; then
 	echo "Failed to get the image size." 1>&2
-	exit 4
+	exit 5
 fi
 
 WIDTH="$(echo "${IMGSIZE}" | awk '{ print $1 }')"
@@ -60,7 +63,7 @@ fi
 if ! ${CONVERT_COMMAND} "${ROOTDIR}/${FPATH}" -resize "${TIMES}100" -strip "${THUMBPATH}"; then
 	echo "Failed to create a thumbnail." 1>&2
 	rm -rf "${TMPDIR}"
-	exit 5
+	exit 6
 fi
 
 collect-file -h -d "${ROOTDIRS}" -f "${THUMBPATH}"

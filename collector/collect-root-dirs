@@ -1,0 +1,29 @@
+#!/bin/bash
+
+ROOTDIRS="${COLLECTIONS_ROOT}"
+QUIET=no
+
+while getopts d:q OPT; do
+	case ${OPT} in
+		d) ROOTDIRS="${OPTARG}";;
+		q) QUIET=yes;;
+		*) exit 1;;
+	esac
+done
+
+if [[ "${ROOTDIRS}" = "" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
+	exit 2
+fi
+
+echo "${ROOTDIRS}" | tr ':' '\n' | while read -r ROOTDIR; do
+	REALROOTDIR="$(realpath -q "${ROOTDIR}")"
+	if [ $? -ne 0 ] || [ ! -d "${REALROOTDIR}"]; then
+		if [[ "${QUIET}" = "no" ]]; then
+			echo "${ROOTDIR} is not a valid path." 1>&2
+		fi
+
+		continue
+	fi
+	echo "${REALROOTDIR}"
+done

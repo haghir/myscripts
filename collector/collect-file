@@ -17,12 +17,12 @@ while getopts d:f:hl:s OPT; do
 	esac
 done
 
-if [[ "x${ROOTDIRS}" = "x" ]]; then
+if [[ "${ROOTDIRS}" = "" ]]; then
 	echo "No root directories (-d) were specified." 1>&2
 	exit 2
 fi
 
-if [[ "x${FPATH}" = "x" ]]; then
+if [[ "${FPATH}" = "" ]]; then
 	echo "No file path (-f) was specified." 1>&2
 	exit 3
 fi
@@ -37,7 +37,10 @@ if [[ "${LPATH:0:1}" = "/" ]]; then
 	exit 5
 fi
 
-ROOTDIR="${ROOTDIRS%%:*}"
+ROOTDIR="$(collect-primary-path -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 6
+fi
 
 HASH="$(sha256sum -b "${FPATH}" | awk '{ print $1 }' | tr '[:upper:]' '[:lower:]')"
 OBJPATH="$(collect-objpath "${HASH}")"
@@ -51,18 +54,18 @@ fi
 
 if [ "${STRICT}" = "yes" ] && [ "${DUPLICATED}" = "yes" ]; then
 	echo "${FPATH} already exists." 1>&2
-	exit 6
+	exit 7
 fi
 
 if [[ "${DUPLICATED}" = "no" ]]; then
 	if ! mkdir -p "${OBJROOT}/${OBJDIR}"; then
 		echo "Failed to create directories to store the file." 1>&2
-		exit 7
+		exit 8
 	fi
 
 	if ! cp -L "${FPATH}" "${OBJROOT}/${OBJPATH}"; then
 		echo "Failed to copy." 1>&2
-		exit 8
+		exit 9
 	fi
 
 	chmod 444 "${OBJROOT}/${OBJPATH}"
@@ -73,7 +76,7 @@ if [[ "${DUPLICATED}" = "no" ]]; then
 	collect-clone -d "${ROOTDIRS}" -f ".objects/${OBJPATH}.info"
 fi
 
-if [[ "x${LPATH}" != "x" ]]; then
+if [[ "${LPATH}" != "" ]]; then
 	LDIR="$(dirname "${LPATH}")"
 	mkdir -p "${ROOTDIR}/${LDIR}"
 
