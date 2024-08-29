@@ -3,12 +3,14 @@
 ROOTDIRS="${COLLECTIONS_ROOT}"
 HASH=""
 LNPATH=""
+QUIET=no
 
-while getopts d:h:l: OPT; do
+while getopts d:h:l:q OPT; do
 	case ${OPT} in
 		d) ROOTDIRS="${OPTARG}";;
 		h) HASH="${OPTARG}";;
 		l) LNPATH="${OPTARG}";;
+		q) QUIET=yes;;
 		*) exit 1;;
 	esac
 done
@@ -41,6 +43,13 @@ fi
 if [[ "${LNPATH:0:1}" = "/" ]]; then
 	echo "The link path (-l) must be a relative path." 1>&2
 	exit 7
+fi
+
+if [ -e "${ROOTDIR}/${LNPATH}" ]; then
+	if [[ "${QUIET}" = "no" ]]; then
+		echo "${ROOTDIR}/${LNPATH} already exists." 1>&2
+	fi
+	exit 8
 fi
 
 LNDIR="$(dirname "${LNPATH}")"
