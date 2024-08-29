@@ -16,7 +16,6 @@ if [[ "${ROOTDIRS}" = "" ]]; then
 	exit 2
 fi
 
-ROOTDIRS="${1}"
 ROOTDIR="${ROOTDIRS%%:*}"
 REALPATH="$(realpath -q "${ROOTDIR}")"
 

@@ -2,16 +2,14 @@
 
 ROOTDIRS="${COLLECTIONS_ROOT}"
 FPATH=""
-LPATH=""
 STRICT=no
 SHOWHASH=no
 
-while getopts d:f:hl:s OPT; do
+while getopts d:f:hs OPT; do
 	case ${OPT} in
 		d) ROOTDIRS="${OPTARG}";;
 		f) FPATH="${OPTARG}";;
 		h) SHOWHASH=yes;;
-		l) LPATH="${OPTARG}";;
 		s) STRICT=yes;;
 		*) exit 1;;
 	esac
@@ -32,12 +30,7 @@ if [ ! -f "${FPATH}" ]; then
 	exit 4
 fi
 
-if [[ "${LPATH:0:1}" = "/" ]]; then
-	echo "A link path (-l) must be a relative path." 1>&2
-	exit 5
-fi
-
-ROOTDIR="$(collect-primary-path -d "${ROOTDIRS}")"
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
 if [[ $? -ne 0 ]]; then
 	exit 6
 fi
@@ -74,20 +67,6 @@ if [[ "${DUPLICATED}" = "no" ]]; then
 
 	collect-clone -d "${ROOTDIRS}" -f ".objects/${OBJPATH}"
 	collect-clone -d "${ROOTDIRS}" -f ".objects/${OBJPATH}.info"
-fi
-
-if [[ "${LPATH}" != "" ]]; then
-	LDIR="$(dirname "${LPATH}")"
-	mkdir -p "${ROOTDIR}/${LDIR}"
-
-	RELPATH=".objects/${OBJPATH}"
-	while [[ "${LDIR}" != "." ]]; do
-		RELPATH="../${RELPATH}"
-		LDIR="$(dirname "${LDIR}")"
-	done
-
-	ln -s "${RELPATH}" "${ROOTDIR}/${LPATH}"
-	collect-clone -d "${ROOTDIRS}" -f "${LPATH}"
 fi
 
 if [[ "${SHOWHASH}" = "yes" ]]; then

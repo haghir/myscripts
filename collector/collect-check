@@ -2,11 +2,13 @@
 
 ROOTDIRS="${COLLECTIONS_ROOT}"
 VERBOSE=no
+MOREVERBOSE=no
 
-while getopts d:v OPT; do
+while getopts d:vV OPT; do
 	case ${OPT} in
 		d) ROOTDIRS="${OPTARG}";;
 		v) VERBOSE=yes;;
+		V) VERBOSE=yes;MOREVERBOSE=yes;;
 		*) exit 1;;
 	esac
 done
@@ -50,7 +52,7 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 		HASH="${OBJPATH##*/.objects/}"
 		HASH="${HASH//\//}"
 
-		if [[ "${VERBOSE}" = "yes" ]]; then
+		if [[ "${MOREVERBOSE}" = "yes" ]]; then
 			echo "${HASH} ${OBJPATH}" | tee -a "${OBJLOG}"
 		else
 			echo "${HASH} ${OBJPATH}" >> "${OBJLOG}"
@@ -62,13 +64,13 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 
 		MIMETYPE=""
 		if [ -f "${OBJPATH}.info" ]; then
-			MIMETYPE="$(jq '.["mime"]["type"]' "${OBJPATH}.info")"
+			MIMETYPE="$(jq -e -r '.["mime"]["type"]' "${OBJPATH}.info")"
 			if [[ $? -ne 0 ]]; then
 				echo "${OBJPATH}.info: no MIME type" | tee -a "${ERRLOG}" 1>&2
 				MIMETYPE=""
 			fi
 
-			if ! jq '.["mime"]["encoding"]' "${OBJPATH}.info" > /dev/null 2>&1; then
+			if ! jq -e -r '.["mime"]["encoding"]' "${OBJPATH}.info" > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: no MIME encoding" | tee -a "${ERRLOG}" 1>&2
 			fi
 		else
@@ -77,7 +79,7 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 
 		IMAGEJSON=""
 		if [[ "${MIMETYPE}" = "image/"* ]]; then
-			IMAGEJSON="$(jq '.["image"]' "${OBJPATH}.info")"
+			IMAGEJSON="$(jq -e -r '.["image"]' "${OBJPATH}.info")"
 			if [[ $? -ne 0 ]]; then
 				echo "${OBJPATH}.info: no image section" | tee -a "${ERRLOG}" 1>&2
 				IMAGEJSON=""
@@ -85,18 +87,18 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 		fi
 
 		if [[ "${IMAGEJSON}" != "" ]]; then
-			if ! echo "${IMAGEJSON}" | jq '.["width"]' > /dev/null 2>&1; then
+			if ! echo "${IMAGEJSON}" | jq -e -r '.["width"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid image width" | tee -a "${ERRLOG}" 1>&2
 			fi
 
-			if ! echo "${IMAGEJSON}" | jq '.["height"]' > /dev/null 2>&1; then
+			if ! echo "${IMAGEJSON}" | jq -e -r '.["height"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid image height" | tee -a "${ERRLOG}" 1>&2
 			fi
 		fi
 
 		VIDEOJSON=""
-		if [[ "${MIMETYPE}" = "image/"* ]]; then
-			VIDEOJSON="$(jq '.["video"]' "${OBJPATH}.info")"
+		if [[ "${MIMETYPE}" = "video/"* ]]; then
+			VIDEOJSON="$(jq -e -r '.["video"]' "${OBJPATH}.info")"
 			if [[ $? -ne 0 ]]; then
 				echo "${OBJPATH}.info: no video section" | tee -a "${ERRLOG}" 1>&2
 				VIDEOJSON=""
@@ -104,19 +106,19 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 		fi
 
 		if [[ "${VIDEOJSON}" != "" ]]; then
-			if ! echo "${VIDEOJSON}" | jq '.["width"]' > /dev/null 2>&1; then
+			if ! echo "${VIDEOJSON}" | jq -e -r '.["width"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid video width" | tee -a "${ERRLOG}" 1>&2
 			fi
 
-			if ! echo "${VIDEOJSON}" | jq '.["height"]' > /dev/null 2>&1; then
+			if ! echo "${VIDEOJSON}" | jq -e -r '.["height"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid video height" | tee -a "${ERRLOG}" 1>&2
 			fi
 
-			if ! echo "${VIDEOJSON}" | jq '.["format_name"]' > /dev/null 2>&1; then
+			if ! echo "${VIDEOJSON}" | jq -e -r '.["format_name"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid format_name width" | tee -a "${ERRLOG}" 1>&2
 			fi
 
-			if ! echo "${VIDEOJSON}" | jq '.["format_long_name"]' > /dev/null 2>&1; then
+			if ! echo "${VIDEOJSON}" | jq -e -r '.["format_long_name"]' > /dev/null 2>&1; then
 				echo "${OBJPATH}.info: invalid format_long_name height" | tee -a "${ERRLOG}" 1>&2
 			fi
 		fi
@@ -151,7 +153,7 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 			continue
 		fi
 
-		if [[ "${VERBOSE}" = "yes" ]]; then
+		if [[ "${MOREVERBOSE}" = "yes" ]]; then
 			echo "${HASH} ${LNPATH}" | tee -a "${LNKLOG}"
 		else
 			echo "${HASH} ${LNPATH}" >> "${LNKLOG}"
@@ -161,7 +163,9 @@ collect-root-dirs -d "${ROOTDIRS}" | while read -r ROOTDIR; do
 	cat "${OBJLOG}" | awk '{ print $1 }' | sort -u > "${OBJLOG}.sorted"
 	cat "${LNKLOG}" "${THUMBS}" | awk '{ print $1 }' | sort -u > "${REFERRERS}.sorted"
 
-	diff "${OBJLOG}.sorted" "${REFERRERS}.sorted" | grep '^<' | awk '{ print $2 ": dead object" }'
+	diff "${OBJLOG}.sorted" "${REFERRERS}.sorted" | grep '^<' | awk '{ print $2 }' | while read -r DEADHASH; do
+		echo "${ROOTDIR}/.objects/$(collect-objpath "${DEADHASH}"): dead object"
+	done
 done
 
 if [[ "${VERBOSE}" = "yes" ]]; then

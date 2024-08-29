@@ -1,0 +1,50 @@
+digraph deps {
+	graph [ rankdir = LR ];
+
+	"collect-fav" -> "collect";
+
+	"collect" -> "collect-primary-root";
+	"collect" -> "collect-file";
+	"collect" -> "collect-ln";
+	"collect" -> "collect-thumbnail";
+	"collect" -> "collect-objpath";
+
+	"collect-check" -> "collect-root-dirs";
+	"collect-check" -> "collect-find-objects";
+	"collect-check" -> "collect-find-links";
+	"collect-check" -> "collect-objpath";
+
+	"collect-clone" -> "collect-primary-root";
+	"collect-clone" -> "collect-root-dirs";
+
+	"collect-file" -> "collect-primary-root";
+	"collect-file" -> "collect-objpath";
+	"collect-file" -> "collect-clone";
+	"collect-file" -> "collect-info";
+
+	"collect-ln" -> "collect-primary-root";
+	"collect-ln" -> "collect-objpath";
+	"collect-ln" -> "collect-clone";
+
+	"collect-find-links" -> "collect-root-dirs";
+
+	"collect-find-objects" -> "collect-root-dirs";
+
+	"collect-refresh-infos" -> "collect-primary-root";
+	"collect-refresh-infos" -> "collect-info";
+	"collect-refresh-infos" -> "collect-clone";
+
+	"collect-refresh-thumbnails" -> "collect-primary-root";
+	"collect-refresh-thumbnails" -> "collect-thumbnail";
+
+	"collect-thumbnail" -> "collect-primary-root";
+	"collect-thumbnail" -> "collect-clone";
+	"collect-thumbnail" -> "collect-image-thumbnail";
+	"collect-thumbnail" -> "collect-video-thumbnail";
+
+	"collect-image-thumbnail" -> "collect-primary-root";
+	"collect-image-thumbnail" -> "collect-file";
+
+	"collect-video-thumbnail" -> "collect-primary-root";
+	"collect-video-thumbnail" -> "collect-file";
+}

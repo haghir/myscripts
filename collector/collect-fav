@@ -1,13 +1,13 @@
 #!/bin/bash
 
 ROOTDIRS="${COLLECTIONS_ROOT}"
-VERBOSE=no
+VERBOSE=""
 WKDIR="$(pwd)"
 
 while getopts d:v OPT; do
 	case ${OPT} in
 		d) ROOTDIRS="${OPTARG}";;
-		v) VERBOSE=yes;;
+		v) VERBOSE="-v";;
 		*) exit 1;;
 	esac
 done
@@ -17,8 +17,8 @@ if [[ "${ROOTDIRS}" = "" ]]; then
 	exit 1
 fi
 
-find -H "${WKDIR}" -mindepth 1 -maxdepth 1 -type d | while read -r DPATH ; do
-	collect -c "${DPATH}" -d "${ROOTDIRS}" -a "fav/$(basename "${DPATH}")"
+find -L "${WKDIR}" -mindepth 1 -maxdepth 1 -type d | while read -r DPATH ; do
+	collect ${VERBOSE} -c "${DPATH}" -d "${ROOTDIRS}" -a "fav/$(basename "${DPATH}")"
 done
 
-collect -c "${WKDIR}" -d "${ROOTDIRS}"
+collect ${VERBOSE} -c "${WKDIR}" -d "${ROOTDIRS}"

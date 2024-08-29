@@ -1,0 +1,57 @@
+#!/bin/bash
+
+ROOTDIRS="${COLLECTIONS_ROOT}"
+HASH=""
+LNPATH=""
+
+while getopts d:h:l: OPT; do
+	case ${OPT} in
+		d) ROOTDIRS="${OPTARG}";;
+		h) HASH="${OPTARG}";;
+		l) LNPATH="${OPTARG}";;
+		*) exit 1;;
+	esac
+done
+
+if [[ "${ROOTDIRS}" = "" ]]; then
+	echo "No root directories (-d) were specified." 1>&2
+	exit 2
+fi
+
+ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
+if [[ $? -ne 0 ]]; then
+	exit 3
+fi
+
+if [[ "${HASH}" = "" ]]; then
+	echo "No hash (-h) was specified." 1>&2
+	exit 4
+fi
+
+if [[ ! "${HASH}" =~ ^[0-9A-Fa-f]{64}$ ]]; then
+	echo "The specified hash is not SHA256." 1>&2
+	exit 5
+fi
+
+if [[ "${LNPATH}" = "" ]]; then
+	echo "No link path (-l) was specified." 1>&2
+	exit 6
+fi
+
+if [[ "${LNPATH:0:1}" = "/" ]]; then
+	echo "The link path (-l) must be a relative path." 1>&2
+	exit 7
+fi
+
+LNDIR="$(dirname "${LNPATH}")"
+mkdir -p "${ROOTDIR}/${LNDIR}"
+
+OBJPATH=".objects/$(collect-objpath "${HASH}")"
+while [[ "${LNDIR}" != "." ]]; do
+	OBJPATH="../${OBJPATH}"
+	LNDIR="$(dirname "${LNDIR}")"
+done
+
+if ln -s "${OBJPATH}" "${ROOTDIR}/${LNPATH}"; then
+	collect-clone -d "${ROOTDIRS}" -f "${LNPATH}"
+fi
