@@ -46,6 +46,9 @@ if [ -e "${OBJROOT}/${OBJPATH}" ]; then
 fi
 
 if [ "${STRICT}" = "yes" ] && [ "${DUPLICATED}" = "yes" ]; then
+	if [[ "${SHOWHASH}" = "yes" ]]; then
+		echo "${HASH}"
+	fi
 	echo "${FPATH} already exists." 1>&2
 	exit 7
 fi
