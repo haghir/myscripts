@@ -35,7 +35,8 @@ LDIR="${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
 LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
 PREFIX="${LDIR}/${LNAME}"
 
-idx=1
+((idx1=1))
+((idx2=1))
 find -L "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
 	if [[ "${VERBOSE}" = "yes" ]]; then
 		echo "Adding ${FPATH}"
@@ -49,14 +50,13 @@ find -L "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" 
 		EXT=".${EXT}"
 	fi
 
-	while [ -e "${ROOTDIR}/${PREFIX}-${idx}"* ]; do
-		idx=$((idx+1))
-	done
-
 	HASH="$(collect-file -s -h -d "${ROOTDIRS}" -f "${FPATH}")"
 	if [[ $? -eq 0 ]]; then
+		while [ -e "${ROOTDIR}/${PREFIX}-${idx1}"* ]; do
+			((idx1=idx1+1))
+		done
+		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}-${idx1}${EXT}"
 		collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
-		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}-${idx}${EXT}"
 	fi
 
 	if [[ "${HASH}" = "" ]]; then
@@ -64,6 +64,9 @@ find -L "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" 
 	fi
 
 	if [[ "${ADDDIR}" != "" ]]; then
-		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
+		while [ -e "${ROOTDIR}/${ADDDIR}/${LNAME}-${idx2}"* ]; do
+			((idx2=idx2+1))
+		done
+		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}-${idx2}${EXT}"
 	fi
 done
