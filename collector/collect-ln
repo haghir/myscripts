@@ -40,8 +40,13 @@ if [[ "${LNPATH}" = "" ]]; then
 	exit 6
 fi
 
-if [[ "${LNPATH:0:1}" = "/" ]]; then
-	echo "The link path (-l) must be a relative path." 1>&2
+if [[ "${LNPATH}" = "/"* ]]; then
+	echo "The link path (-l) must be a relative one." 1>&2
+	exit 7
+fi
+
+if [[ "${LNPATH}" = "~/"* ]]; then
+	echo "The link path (-l) must be a relative one." 1>&2
 	exit 7
 fi
 

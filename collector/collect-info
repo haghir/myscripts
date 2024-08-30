@@ -3,7 +3,7 @@
 FPATH="${1}"
 
 if [[ "${FPATH}" = "" ]]; then
-	echo "No input path (-f) was specified." 1>&2
+	echo "No input path was specified." 1>&2
 	exit 1
 fi
 
