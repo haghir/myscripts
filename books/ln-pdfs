@@ -1,0 +1,46 @@
+#!/bin/bash
+
+INDIR="${BOOKSDIR}"
+OUTDIR="${PDFDIR}"
+
+while getopts i:o: OPT; do
+    case ${OPT} in
+        i) INDIR="${OPTARG}";;
+        o) OUTDIR="${OPTARG}";;
+        *) exit 1;;
+    esac
+done
+
+if [ ! -d "${INDIR}" ]; then
+    echo "No input directory exists." 1>&2
+    exit 1
+fi
+
+INDIR="$(realpath "${INDIR}")"
+if [[ $? -ne 0 ]]; then
+    echo "No input directory exists." 1>&2
+    exit 2
+fi
+
+if [ ! -d "${OUTDIR}" ]; then
+    echo "No output directory exists." 1>&2
+    exit 3
+fi
+
+OUTDIR="$(realpath "${OUTDIR}")"
+if [[ $? -ne 0 ]]; then
+    echo "No output directory exists." 1>&2
+    exit 4
+fi
+
+find "${INDIR}" -type f -name "*.pdf" | while read -r INPATH; do
+    RELPATH="${INPATH#${INDIR}/}"
+    OUTPATH="${OUTDIR}/${RELPATH}"
+
+    if [ -e "${OUTPATH}" ]; then
+        continue
+    fi
+
+    mkdir -p "$(dirname "${OUTPATH}")"
+    ln -s "${INPATH}" "${OUTPATH}"
+done
