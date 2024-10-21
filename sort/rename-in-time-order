@@ -1,0 +1,13 @@
+#!/bin/bash
+
+((COUNT=$(find . -mindepth 1 -maxdepth 1 -type f | wc -l)))
+((LEN=${#COUNT}))
+
+((INDEX=0))
+find . -mindepth 1 -maxdepth 1 -type f -printf "%T@\t%p\n" | sort | while read -r ENTRY; do
+    FPATH="$(echo "${ENTRY}" | awk -F '[\t]' '{ print $2 }')"
+    FNAME="$(basename "${FPATH}")"
+    PREFIX="$(printf "%0${LEN}d" "${INDEX}")"
+    mv "${FNAME}" "${PREFIX}-${FNAME}"
+    ((INDEX++))
+done
