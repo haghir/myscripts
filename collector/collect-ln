@@ -4,13 +4,15 @@ ROOTDIRS="${COLLECTIONS_ROOT}"
 HASH=""
 LNPATH=""
 QUIET=no
+UNIQUE=no
 
-while getopts d:h:l:q OPT; do
+while getopts d:h:l:qu OPT; do
 	case ${OPT} in
 		d) ROOTDIRS="${OPTARG}";;
 		h) HASH="${OPTARG}";;
 		l) LNPATH="${OPTARG}";;
 		q) QUIET=yes;;
+		u) UNIQUE=yes;;
 		*) exit 1;;
 	esac
 done
@@ -58,13 +60,21 @@ if [ -e "${ROOTDIR}/${LNPATH}" ]; then
 fi
 
 LNDIR="$(dirname "${LNPATH}")"
+LNDIR2="${LNDIR}"
 mkdir -p "${ROOTDIR}/${LNDIR}"
 
 OBJPATH=".objects/$(collect-objpath "${HASH}")"
-while [[ "${LNDIR}" != "." ]]; do
+while [[ "${LNDIR2}" != "." ]]; do
 	OBJPATH="../${OBJPATH}"
-	LNDIR="$(dirname "${LNDIR}")"
+	LNDIR2="$(dirname "${LNDIR2}")"
 done
+
+if [[ "${UNIQUE}" == "yes" ]]; then
+	if ls -l "${ROOTDIR}/${LNDIR}/" | grep -F "${OBJPATH}" > /dev/null 2>&1; then
+		echo "Symlinks to the object already exist." 1>&2
+		exit 9
+	fi
+fi
 
 if ln -s "${OBJPATH}" "${ROOTDIR}/${LNPATH}"; then
 	collect-clone -d "${ROOTDIRS}" -f "${LNPATH}"

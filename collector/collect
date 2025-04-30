@@ -50,19 +50,19 @@ find -L "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" 
 	fi
 
 	HASH="$(collect-file -s -h -d "${ROOTDIRS}" -f "${FPATH}")"
-	if [[ $? -ne 0 ]]; then
-		continue
+	if [[ $? -eq 0 ]]; then
+		while [ -e "${ROOTDIR}/${PREFIX}-${idx}"* ]; do
+		((idx=idx+1))
+		done
+
+		collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
+
+		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}-${idx}${EXT}"
 	fi
 
-	while [ -e "${ROOTDIR}/${PREFIX}-${idx}"* ]; do
-		((idx=idx+1))
-	done
-
-	collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
-
-	collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}-${idx}${EXT}"
-
-	if [[ "${ADDDIR}" != "" ]]; then
-		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}"
+	if [[ -z "${HASH}" ]]; then
+		:
+	elif [[ ! -z "${ADDDIR}" ]]; then
+		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}" -u
 	fi
 done
