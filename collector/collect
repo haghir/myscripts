@@ -6,63 +6,66 @@ VERBOSE=no
 CURRENT_DIR="."
 
 while getopts a:c:d:v OPT; do
-	case ${OPT} in
-		a) ADDDIR="${OPTARG}";;
-		c) CURRENT_DIR="${OPTARG}";;
-		d) ROOTDIRS="${OPTARG}";;
-		v) VERBOSE=yes;;
-		*) exit 1;;
-	esac
+    case ${OPT} in
+        a) ADDDIR="${OPTARG}";;
+        c) CURRENT_DIR="${OPTARG}";;
+        d) ROOTDIRS="${OPTARG}";;
+        v) VERBOSE=yes;;
+        *) exit 1;;
+    esac
 done
 
 if [[ "${ROOTDIRS}" = "" ]]; then
-	echo "No root directories (-d) were specified." 1>&2
-	exit 2
+    echo "No root directories (-d) were specified." 1>&2
+    exit 2
 fi
 
 ROOTDIR="$(collect-primary-root -d "${ROOTDIRS}")"
 if [[ $? -ne 0 ]]; then
-	exit 3
+    exit 3
 fi
 
-TS=$(date +%Y%m%d%H%M%S)
-YEAR=${TS:0:4}
-MONTH=${TS:4:2}
-DAY=${TS:6:2}
-TIME=${TS:8:6}
-
-LDIR="${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
-LNAME="${YEAR}${MONTH}${DAY}-${TIME}"
-PREFIX="${LDIR}/${LNAME}"
-
-((idx=1))
 find -L "${CURRENT_DIR}" -mindepth 1 -maxdepth 1 -type f -not -name ".DS_Store" | sort | while read -r FPATH ; do
-	if [[ "${VERBOSE}" = "yes" ]]; then
-		echo "Adding ${FPATH}"
-	fi
+    while true; do
+        TS=$(date +%Y%m%d-%H%M%S-%N)
+        TS=${TS:0:22}
+        YEAR=${TS:0:4}
+        MONTH=${TS:4:2}
+        DAY=${TS:6:2}
+        TIME=${TS:9:13}
 
-	FNAME="$(basename "${FPATH}")"
-	EXT="${FNAME##*.}"
-	if [[ "${EXT}" = "${FNAME}" ]]; then
-		EXT=""
-	else
-		EXT=".${EXT}"
-	fi
+        LDIR="${YEAR}/${YEAR}-${MONTH}/${YEAR}-${MONTH}-${DAY}"
+        LNAME="${TS}"
+        PREFIX="${LDIR}/${LNAME}"
 
-	HASH="$(collect-file -s -h -d "${ROOTDIRS}" -f "${FPATH}")"
-	if [[ $? -eq 0 ]]; then
-		while [ -e "${ROOTDIR}/${PREFIX}-${idx}"* ]; do
-		((idx=idx+1))
-		done
+        if [ ! -e "${ROOTDIR}/${PREFIX}"* ]; then
+            break
+        fi
 
-		collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
+        sleep 0.1
+    done
 
-		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}-${idx}${EXT}"
-	fi
+    if [[ "${VERBOSE}" = "yes" ]]; then
+        echo "Adding ${FPATH}"
+    fi
 
-	if [[ -z "${HASH}" ]]; then
-		:
-	elif [[ ! -z "${ADDDIR}" ]]; then
-		collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}-${idx}${EXT}" -u
-	fi
+    FNAME="$(basename "${FPATH}")"
+    EXT="${FNAME##*.}"
+    if [[ "${EXT}" = "${FNAME}" ]]; then
+        EXT=""
+    else
+        EXT=".${EXT}"
+    fi
+
+    HASH="$(collect-file -s -h -d "${ROOTDIRS}" -f "${FPATH}")"
+    if [[ $? -eq 0 ]]; then
+        collect-thumbnail -d "${ROOTDIRS}" -f ".objects/$(collect-objpath "${HASH}")"
+        collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${PREFIX}${EXT}"
+    fi
+
+    if [[ -z "${HASH}" ]]; then
+        :
+    elif [[ ! -z "${ADDDIR}" ]]; then
+        collect-ln -d "${ROOTDIRS}" -h "${HASH}" -l "${ADDDIR}/${LNAME}${EXT}" -u
+    fi
 done
