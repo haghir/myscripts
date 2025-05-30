@@ -1,0 +1,65 @@
+#!/bin/bash
+
+directory="$(pwd)"
+dryrun=no
+
+while getopts d:n OPT; do
+    case ${OPT} in
+        d) directory="${OPTARG}";;
+        n) dryrun=yes;;
+        *) exit 1;;
+    esac
+done
+
+# Check if the provided path is a directory
+if [[ ! -d "$directory" ]]; then
+    echo "Error: '$directory' is not a directory"
+    exit 1
+fi
+
+# Ask for confirmation
+if [[ "$dryrun" == "no" ]]; then
+    echo "WARNING: This will rename all files in '$directory' to include timestamps."
+    echo "Type YES (in uppercase) to continue:"
+    read -r confirmation
+
+    if [[ "$confirmation" != "YES" ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
+fi
+
+# Process each file in the directory
+find "$directory" -type f -print0 | while IFS= read -r -d '' fpath; do
+    fname="$(basename "$fpath")"
+    dpath="$(dirname "$fpath")"
+
+    # Get the modification timestamp
+    timestamp=$(stat -f "%Sm" -t "%Y%m%d-%H%M%S" "$fpath")
+
+    # Get the file extension
+    extension="${fname##*.}"
+    if [[ "$extension" == "$fname" ]]; then
+        extension=""
+    else
+        extension=".${extension}"
+    fi
+
+    # Create new filename with timestamp
+    ((i=0))
+    while true; do
+        new_name="${dpath}/${timestamp}-${i}${extension}"
+        if [[ ! -f "$new_name" ]]; then
+            break
+        fi
+        ((i++))
+    done
+
+    # Rename the file
+    if [[ "$dryrun" == "no" ]]; then
+        mv "$fpath" "$new_name"
+        echo "Renamed: $fpath -> $(basename "${new_name}")"
+    else
+        echo "Would rename: $fpath -> $(basename "${new_name}")"
+    fi
+done
