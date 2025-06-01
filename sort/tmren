@@ -35,7 +35,8 @@ find "$directory" -type f -print0 | while IFS= read -r -d '' fpath; do
     dpath="$(dirname "$fpath")"
 
     # Get the modification timestamp
-    timestamp=$(stat -f "%Sm" -t "%Y%m%d-%H%M%S" "$fpath")
+    timestamp="$(stat --format="%Y" "$fpath")"
+    timestamp="$(date --date="@${timestamp}" +%Y%m%d-%H%M%S)"
 
     # Get the file extension
     extension="${fname##*.}"
