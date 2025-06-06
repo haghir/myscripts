@@ -1,91 +1,78 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-directory="$(pwd)"
-dryrun=no
+import os
+import sys
+import time
+import argparse
+from pathlib import Path
 
-while getopts d:n OPT; do
-    case ${OPT} in
-        d) directory="${OPTARG}";;
-        n) dryrun=yes;;
-        *) exit 1;;
-    esac
-done
+def is_hidden(path):
+    """Check if a path or any of its parents is hidden"""
+    return any(part.startswith('.') for part in path.parts)
 
-# Check if the provided path is a directory
-if [[ ! -d "$directory" ]]; then
-    echo "Error: '$directory' is not a directory"
-    exit 1
-fi
+def main():
+    parser = argparse.ArgumentParser(description='Rename files to include timestamps')
+    parser.add_argument('-d', '--directory', default=os.getcwd(),
+                      help='Directory containing files to rename')
+    parser.add_argument('-n', '--dry-run', action='store_true',
+                      help='Show what would be renamed without actually renaming')
+    parser.add_argument('-a', '--all', action='store_true',
+                      help='Include hidden files and directories')
+    parser.add_argument('-r', '--recursive', action='store_true',
+                      help='Scan directories recursively')
+    args = parser.parse_args()
 
-# Ask for confirmation
-if [[ "$dryrun" == "no" ]]; then
-    echo "WARNING: This will rename all files in '$directory' to include timestamps."
-    echo "Type YES (in uppercase) to continue:"
-    read -r confirmation
+    directory = Path(args.directory)
+    if not directory.is_dir():
+        print(f"Error: '{directory}' is not a directory", file=sys.stderr)
+        sys.exit(1)
 
-    if [[ "$confirmation" != "YES" ]]; then
-        echo "Operation cancelled."
-        exit 1
-    fi
-fi
+    if not args.dry_run:
+        print(f"WARNING: This will rename all files in '{directory}' to include timestamps.")
+        confirmation = input("Type YES (in uppercase) to continue: ")
+        if confirmation != "YES":
+            print("Operation cancelled.")
+            sys.exit(1)
 
-function getts()
-{
-    TS="$(stat --format="%y" "${1}" 2>/dev/null)"
-    if [[ $? -ne 0 ]]; then
-        TS="$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S.000000" "${1}" 2>/dev/null)"
-        if [[ $? -ne 0 ]]; then
-            return 1
-        fi
-    fi
+    run_at = int(time.time() * 1e6)  # Current time in microseconds
 
-    # 2025-06-04 23:28:47.051574355 +0900
-    # 0    5  8  11 14 17 20
-    YEAR=${TS:0:4}
-    MON=${TS:5:2}
-    DAY=${TS:8:2}
-    HOUR=${TS:11:2}
-    MIN=${TS:14:2}
-    SEC=${TS:17:2}
-    MIC=${TS:20:6}
-    echo "${YEAR}${MON}${DAY}-${HOUR}${MIN}${SEC}-${MIC}"
-}
+    # Use rglob for recursive scanning or glob for non-recursive
+    scan_method = directory.rglob if args.recursive else directory.glob
+    pattern = "**/*" if args.recursive else "*"
 
-# Process each file in the directory
-find "$directory" -type f -print0 | while IFS= read -r -d '' fpath; do
-    fname="$(basename "$fpath")"
-    dpath="$(dirname "$fpath")"
+    for file_path in scan_method(pattern):
+        try:
+            # Skip hidden files and directories unless --all is specified
+            if not args.all and is_hidden(file_path):
+                continue
+            if not file_path.is_file():
+                continue
 
-    # Get the modification timestamp
-    timestamp="$(getts "${fpath}")"
-    if [[ $? -ne 0 ]]; then
-        echo "Failed to get a timestamp for ${fpath}" 1>&2
-        continue
-    fi
+            # Get timestamp
+            timestamp = os.stat(file_path).st_mtime_ns
 
-    # Get the file extension
-    extension="${fname##*.}"
-    if [[ "$extension" == "$fname" ]]; then
-        extension=""
-    else
-        extension=".${extension}"
-    fi
+            # Get file extension
+            extension = file_path.suffix
+            if not extension:
+                extension = ""
 
-    # Create new filename with timestamp
-    ((i=0))
-    while true; do
-        new_name="${dpath}/${timestamp}-${i}${extension}"
-        if [[ ! -f "$new_name" ]]; then
-            break
-        fi
-        ((i++))
-    done
+            # Create new filename with timestamp
+            i = 0
+            while True:
+                new_name = file_path.parent / f"{timestamp}-{run_at}-{i}{extension}"
+                if not new_name.exists():
+                    break
+                i += 1
 
-    # Rename the file
-    if [[ "$dryrun" == "no" ]]; then
-        mv "$fpath" "$new_name"
-        echo "Renamed: $fpath -> $(basename "${new_name}")"
-    else
-        echo "Would rename: $fpath -> $(basename "${new_name}")"
-    fi
-done
+            # Rename the file
+            if args.dry_run:
+                print(f"Would rename: {file_path} -> {new_name.name}")
+            else:
+                file_path.rename(new_name)
+                print(f"Renamed: {file_path} -> {new_name.name}")
+
+        except Exception as e:
+            print(f"Error processing {file_path}: {e}", file=sys.stderr)
+
+if __name__ == "__main__":
+    main() 
