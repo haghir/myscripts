@@ -6,9 +6,10 @@ import time
 import argparse
 from pathlib import Path
 
-def is_hidden(path):
-    """Check if a path or any of its parents is hidden"""
-    return any(part.startswith('.') for part in path.parts)
+def is_hidden(path, target_dir):
+    """Check if a path is hidden relative to the target directory"""
+    relative_path = path.relative_to(target_dir)
+    return any(part.startswith('.') for part in relative_path.parts)
 
 def main():
     parser = argparse.ArgumentParser(description='Rename files to include timestamps')
@@ -43,7 +44,7 @@ def main():
     for file_path in scan_method(pattern):
         try:
             # Skip hidden files and directories unless --all is specified
-            if not args.all and is_hidden(file_path):
+            if not args.all and is_hidden(file_path, directory):
                 continue
             if not file_path.is_file():
                 continue
