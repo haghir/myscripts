@@ -1,0 +1,14 @@
+hardstatus on
+screen -t claude claude
+screen -t emacs emacs -nw
+screen -t bash bash
+split -v
+resize 25%
+select claude
+focus
+split
+resize 70%
+select emacs
+focus
+select bash
+focus

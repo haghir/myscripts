@@ -1,0 +1,4 @@
+#!/bin/sh
+
+BINDIR="$(dirname "${0}")"
+screen -c "${BINDIR}/devscreenrc"
