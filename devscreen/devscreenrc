@@ -1,4 +1,4 @@
-hardstatus on
+hardstatus alwayslastline "%{= KW}%H: %-Lw%{= bW}%n%f %t%{-}%+Lw %=%C%a %Y-%M-%d"
 screen -t claude claude
 screen -t emacs emacs -nw
 screen -t bash bash
