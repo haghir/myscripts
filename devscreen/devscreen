@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-BINDIR="$(dirname "${0}")"
-screen -c "${BINDIR}/devscreenrc"
+if [[ $# -gt 0 ]]; then
+	if [[ ! -d "${1}" ]]; then
+		echo "\"${1}\" is not a directory" 1>&2
+		exit 1
+	fi
+	cd "${1}"
+fi
+
+screen -c "$(dirname "${0}")/devscreenrc"

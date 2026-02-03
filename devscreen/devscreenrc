@@ -2,6 +2,8 @@ bindkey "^[[1;5A" focus up
 bindkey "^[[1;5B" focus down
 bindkey "^[[1;5C" focus right
 bindkey "^[[1;5D" focus left
+bindkey "^[[5;5~" prev
+bindkey "^[[6;5~" next
 
 hardstatus alwayslastline "%{= KW}%H: %-Lw%{= bW}%n%f %t%{-}%+Lw %=%C%a %M %d, %Y"
 screen -t claude claude
