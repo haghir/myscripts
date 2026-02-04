@@ -1,3 +1,5 @@
+startup_message off
+
 bindkey "^[[1;5A" focus up
 bindkey "^[[1;5B" focus down
 bindkey "^[[1;5C" focus right
