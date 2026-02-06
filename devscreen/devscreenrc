@@ -7,6 +7,16 @@ bindkey "^[[1;5D" focus left
 bindkey "^[[5;5~" prev
 bindkey "^[[6;5~" next
 
+bindkey "^[h" focus left
+bindkey "^[j" focus down
+bindkey "^[k" focus up
+bindkey "^[l" focus right
+bindkey "^[b" prev
+bindkey "^[f" next
+bindkey "^[[" resize -1
+bindkey "^[]" resize +1
+bindkey "^[q" quit
+
 hardstatus alwayslastline "%{= KW}%H: %-Lw%{= bW}%n%f %t%{-}%+Lw %=%C%a %M %d, %Y"
 screen -t claude claude
 screen -t emacs emacs -nw
