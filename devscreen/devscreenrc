@@ -29,7 +29,7 @@ focus
 split
 resize 70%
 split -v
-resize 50%
+resize 45%
 select emacs
 focus
 select sub
