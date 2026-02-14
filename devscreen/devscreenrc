@@ -1,12 +1,5 @@
 startup_message off
 
-bindkey "^[[1;5A" focus up
-bindkey "^[[1;5B" focus down
-bindkey "^[[1;5C" focus right
-bindkey "^[[1;5D" focus left
-bindkey "^[[5;5~" prev
-bindkey "^[[6;5~" next
-
 bindkey "^[h" focus left
 bindkey "^[j" focus down
 bindkey "^[k" focus up
