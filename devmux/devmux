@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [[ ! -n "${TMUX}" ]]; then
+	echo "You are NOT in a tmux session." 1>&2
+	exit 1
+fi
+
+if [[ $# -gt 0 ]]; then
+	if [[ ! -d "${1}" ]]; then
+		echo "\"${1}\" is not a directory" 1>&2
+		exit 1
+	fi
+	cd "${1}"
+fi
+
+tmux new-window
+tmux split-window -v -b
+tmux resize-pane -y 70%
+tmux split-window -h
+tmux resize-pane -x 70%
+tmux select-pane -D
+tmux split-window -h
+tmux send-keys -t 0 "claude" Enter
+tmux send-keys -t 1 "emacs -nw" Enter
