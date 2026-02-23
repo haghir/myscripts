@@ -1,6 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
-cat - |\
+{
+	if [[ $# -gt 0 ]]; then
+		echo "${1}"
+	else
+		cat -
+	fi
+} |\
 sed -e 's/A/𝐀/g' |\
 sed -e 's/B/𝐁/g' |\
 sed -e 's/C/𝐂/g' |\
