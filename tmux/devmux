@@ -5,6 +5,15 @@ if [[ ! -n "${TMUX}" ]]; then
 	exit 1
 fi
 
+no_claude=false
+while getopts ":n" opt; do
+	case ${opt} in
+		n) no_claude=true ;;
+		*) echo "Usage: devmux [-n] [path]" 1>&2; exit 1 ;;
+	esac
+done
+shift $((OPTIND - 1))
+
 if [[ $# -gt 0 ]]; then
 	if [[ ! -d "${1}" ]]; then
 		echo "\"${1}\" is not a directory" 1>&2
@@ -20,5 +29,7 @@ tmux split-window -h
 tmux resize-pane -x 70%
 tmux select-pane -D
 tmux split-window -h
-tmux send-keys -t 0 "claude" Enter
+if [[ "${no_claude}" == false ]]; then
+	tmux send-keys -t 0 "claude" Enter
+fi
 tmux send-keys -t 1 "emacs -nw" Enter
