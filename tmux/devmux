@@ -5,11 +5,11 @@ if [[ ! -n "${TMUX}" ]]; then
 	exit 1
 fi
 
-no_claude=false
-while getopts ":n" opt; do
+with_claude=false
+while getopts ":c" opt; do
 	case ${opt} in
-		n) no_claude=true ;;
-		*) echo "Usage: devmux [-n] [path]" 1>&2; exit 1 ;;
+		c) with_claude=true ;;
+		*) echo "Usage: devmux [-c] [path]" 1>&2; exit 1 ;;
 	esac
 done
 shift $((OPTIND - 1))
@@ -29,7 +29,7 @@ tmux split-window -h
 tmux resize-pane -x 70%
 tmux select-pane -D
 tmux split-window -h
-if [[ "${no_claude}" == false ]]; then
+if [[ "${with_claude}" == true ]]; then
 	tmux send-keys -t 0 "claude" Enter
 fi
 tmux send-keys -t 1 "emacs -nw" Enter
