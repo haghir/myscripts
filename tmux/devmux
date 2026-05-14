@@ -5,7 +5,7 @@ if [[ ! -n "${TMUX}" ]]; then
 	exit 1
 fi
 
-with_claude=false
+with_claude=true
 while getopts ":c" opt; do
 	case ${opt} in
 		c) with_claude=true ;;
