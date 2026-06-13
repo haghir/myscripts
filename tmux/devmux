@@ -5,6 +5,7 @@ if [[ ! -n "${TMUX}" ]]; then
 	exit 1
 fi
 
+# Set the value to false if Claude is disabled by default.
 with_claude=true
 while getopts ":c" opt; do
 	case ${opt} in
@@ -29,7 +30,7 @@ tmux split-window -h
 tmux resize-pane -x 70%
 tmux select-pane -D
 tmux split-window -h
-if [[ "${with_claude}" == true ]]; then
-	tmux send-keys -t 0 "claude" Enter
-fi
 tmux send-keys -t 1 "emacs -nw" Enter
+if [[ "${with_claude}" == true ]]; then
+	tmux send-keys -t 2 "claude" Enter
+fi
