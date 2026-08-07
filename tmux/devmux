@@ -27,10 +27,8 @@ tmux new-window
 tmux split-window -v -b
 tmux resize-pane -y 70%
 tmux split-window -h
-tmux resize-pane -x 70%
+tmux resize-pane -x 60%
 tmux select-pane -D
-tmux split-window -h
-tmux send-keys -t 1 "emacs -nw" Enter
 if [[ "${with_claude}" == true ]]; then
 	tmux send-keys -t 2 "claude" Enter
 fi
