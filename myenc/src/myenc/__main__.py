@@ -5,7 +5,7 @@
 
 import sys
 
-SUBCOMMANDS = {"encred", "decred"}
+SUBCOMMANDS = {"encred", "decred", "hashpass"}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,6 +24,10 @@ def main(argv: list[str] | None = None) -> int:
         from myenc import decred
 
         return decred.main(rest)
+    if command == "hashpass":
+        from myenc import hashpass
+
+        return hashpass.main(rest)
     raise AssertionError(f"unhandled subcommand: {command}")
 
 

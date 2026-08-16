@@ -3,8 +3,8 @@
 A hatchling-packaged Python module, `myenc`, implementing OpenPGP-based
 encryption tools from scratch, without any PGP/OpenPGP library. Subcommands
 live under `src/myenc/` and are invoked as `python3 -m myenc <subcommand>
-...`, dispatched by `src/myenc/__main__.py`. `encred` and `decred` exist so
-far.
+...`, dispatched by `src/myenc/__main__.py`. `encred`, `decred`, and
+`hashpass` exist so far.
 
 To add a new subcommand: create `src/myenc/<name>.py` with `parse_args`
 and `main(argv=None) -> int` functions (see `encred.py`/`decred.py` for the
@@ -24,6 +24,18 @@ session key, then a v2 SEIPD packet (chunked AES-256-GCM) containing a
 Literal Data packet with the payload. Only dependency: `cryptography`, used
 solely for the AES-GCM and HKDF primitives — all packet framing, S2K, and
 armor logic is hand-rolled against the RFC text.
+
+## hashpass
+
+Usage: `python3 -m myenc hashpass [-p <passphrase>]`. Implemented in
+`src/myenc/hashpass.py`.
+
+Derives a salted SHA-256 password hash: `sha256(salt + password)`. Unlike
+the original `bin/hashpass` shell script (fixed `SALT1`/`SALT2`
+constants, so the same password always hashed the same way), the salt is
+freshly random (`secrets.token_hex`) on every run, so the tool prints
+`salt:hexdigest` rather than just the digest — the salt is needed to
+reproduce or verify the hash later.
 
 ## decred
 

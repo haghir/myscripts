@@ -1,0 +1,3 @@
+#!/bin/bash
+
+pytnon3 -m myenc decred  "${1}"

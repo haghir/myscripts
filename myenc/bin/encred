@@ -1,0 +1,19 @@
+#!/bin/bash
+
+TXTPATH="${1}"
+ASCPATH="${TXTPATH%.txt}.asc"
+SALT="passphrase salt"
+DIGEST="passphrase digest"
+
+if [[ "${TXTPATH}.asc" == "${ASCPATH}" ]] ; then
+	echo "Invalid file name: $TXTPATH" 1>&2
+	exit 1
+fi
+
+if ! python3 -m myenc encred --salt "${SALT}" --digest "${DIGEST}" -o "${ASCPATH}" "${TXTPATH}" ; then
+	echo "Failed to encrypt ${TXTPATH} -> ${ASCPATH}" 1>&2
+	exit 1
+fi
+
+chmod 444 "${ASCPATH}"
+rm -f "${TXTPATH}"
