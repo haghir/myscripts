@@ -5,15 +5,14 @@ PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
 
 TXTPATH="${1}"
 ASCPATH="${TXTPATH%.txt}.asc"
-SALT="passphrase salt"
-DIGEST="passphrase digest"
+HASH="passphrase bcrypt hash"
 
 if [[ "${TXTPATH}.asc" == "${ASCPATH}" ]] ; then
 	echo "Invalid file name: $TXTPATH" 1>&2
 	exit 1
 fi
 
-if ! "${PYTHON}" -m myenc encred --salt "${SALT}" --digest "${DIGEST}" -o "${ASCPATH}" "${TXTPATH}" ; then
+if ! "${PYTHON}" -m myenc encred --hash "${HASH}" -o "${ASCPATH}" "${TXTPATH}" ; then
 	echo "Failed to encrypt ${TXTPATH} -> ${ASCPATH}" 1>&2
 	exit 1
 fi

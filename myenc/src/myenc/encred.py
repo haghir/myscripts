@@ -29,11 +29,10 @@ import struct
 import sys
 from base64 import b64encode
 
+import bcrypt
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-
-from myenc.hashpass import hash_password
 
 # --- OpenPGP registry constants used (RFC 9580 Section 9) ---
 SYM_ALGO_AES256 = 9
@@ -270,15 +269,15 @@ def encrypt(input_stream, output_stream, passphrase: bytes) -> None:
                         literal.write(block)
 
 
-def read_passphrase(supplied: str | None, salt: str | None, digest: str | None) -> bytes:
-    """If `salt`/`digest` (as printed by `myenc hashpass`) are given, the
-    passphrase only needs to be entered once: it's checked against the
-    digest instead of a second, confirmation entry.
+def read_passphrase(supplied: str | None, bcrypt_hash: str | None) -> bytes:
+    """If `bcrypt_hash` (as printed by `myenc hashpass`) is given, the
+    passphrase only needs to be entered once: it's checked against the hash
+    instead of a second, confirmation entry.
     """
-    if salt is not None:
+    if bcrypt_hash is not None:
         passphrase = supplied if supplied is not None else getpass.getpass("Passphrase: ")
-        if hash_password(passphrase, salt).lower() != digest.lower():
-            raise ValueError("passphrase does not match the given salt/digest")
+        if not bcrypt.checkpw(passphrase.encode("utf-8"), bcrypt_hash.encode("ascii")):
+            raise ValueError("passphrase does not match the given hash")
         return passphrase.encode("utf-8")
     if supplied is not None:
         return supplied.encode("utf-8")
@@ -298,26 +297,18 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("-o", "--output", metavar="FILE", help="output file path (default: stdout)")
     parser.add_argument("-p", "--passphrase", metavar="PASSPHRASE", help="passphrase (default: prompt and confirm)")
     parser.add_argument(
-        "--salt",
-        metavar="SALT",
-        help="salt from `myenc hashpass` output; with --digest, verifies the passphrase without a second prompt",
-    )
-    parser.add_argument(
-        "--digest",
-        metavar="DIGEST",
-        help="digest from `myenc hashpass` output; with --salt, verifies the passphrase without a second prompt",
+        "--hash",
+        metavar="BCRYPT_HASH",
+        help="bcrypt hash from `myenc hashpass` output; verifies the passphrase without a second prompt",
     )
     parser.add_argument("input", nargs="?", metavar="FILE", help="input file path (default: stdin)")
-    args = parser.parse_args(argv)
-    if (args.salt is None) != (args.digest is None):
-        parser.error("--salt and --digest must be given together")
-    return args
+    return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        passphrase = read_passphrase(args.passphrase, args.salt, args.digest)
+        passphrase = read_passphrase(args.passphrase, args.hash)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

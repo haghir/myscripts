@@ -1,25 +1,23 @@
 # SPDX-FileCopyrightText: 2026-present U.N. Owen <void@some.where>
 #
 # SPDX-License-Identifier: MIT
-"""Derive a salted SHA-256 password hash from a passphrase.
+"""Derive a bcrypt password hash from a passphrase.
 
 Prompts for a password (with confirmation) unless one is supplied via
--p/--passphrase, generates a fresh random salt, and prints
-`salt:hexdigest` so the hash can be reproduced later given the printed
-salt and the original password.
+-p/--passphrase, and prints the resulting bcrypt hash string. The salt and
+cost factor are embedded in that string, so it alone (passed to `myenc
+encred --hash`) is enough to verify the password later.
 """
 
 import argparse
 import getpass
-import hashlib
-import secrets
 import sys
 
-SALT_BYTES = 16  # -> 32 random hex characters
+import bcrypt
 
 
-def hash_password(password: str, salt: str) -> str:
-    return hashlib.sha256(f"{salt}{password}".encode("utf-8")).hexdigest()
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("ascii")
 
 
 def read_password(supplied: str | None) -> str:
@@ -36,7 +34,7 @@ def read_password(supplied: str | None) -> str:
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="myenc hashpass",
-        description="Derive a salted SHA-256 password hash from a passphrase.",
+        description="Derive a bcrypt password hash from a passphrase.",
     )
     parser.add_argument("-p", "--passphrase", metavar="PASSPHRASE", help="password (default: prompt and confirm)")
     return parser.parse_args(argv)
@@ -46,8 +44,5 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     password = read_password(args.passphrase)
 
-    salt = secrets.token_hex(SALT_BYTES)
-    digest = hash_password(password, salt)
-
-    print(f"{salt}:{digest}")
+    print(hash_password(password))
     return 0

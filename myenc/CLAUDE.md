@@ -14,28 +14,43 @@ a matching dispatch branch.
 ## encred
 
 Usage: `python3 -m myenc encred [-o <output file>] [-p <passphrase>]
-[<input file>]`. Implemented in `src/myenc/encred.py`.
+[--hash <bcrypt hash>] [<input file>]`. Implemented in
+`src/myenc/encred.py`.
 
 Encrypts a file or stdin to an ASCII-armored OpenPGP symmetric message,
 AES-256-GCM, per **RFC 9580** (the finalized "crypto-refresh" spec, not the
 older RFC 4880 / draft-bis format). Wire format: a v6 Symmetric-Key
 Encrypted Session Key packet (Iterated & Salted S2K) wrapping a random
 session key, then a v2 SEIPD packet (chunked AES-256-GCM) containing a
-Literal Data packet with the payload. Only dependency: `cryptography`, used
+Literal Data packet with the payload. Dependencies: `cryptography`, used
 solely for the AES-GCM and HKDF primitives — all packet framing, S2K, and
-armor logic is hand-rolled against the RFC text.
+armor logic is hand-rolled against the RFC text — and `bcrypt`, used only
+for the optional `--hash` passphrase check below.
+
+`--hash` takes a bcrypt hash string as printed by `myenc hashpass`; if
+given, the passphrase (from `-p` or a single prompt) is checked with
+`bcrypt.checkpw` against that hash before encrypting, instead of asking
+for a second, confirmation entry — this is what lets `bin/encred` hard-code
+a known-good hash of the intended passphrase and abort with "Wrong
+password" on a typo, rather than silently encrypting under the wrong key.
+This replaced an earlier `--salt`/`--digest` pair (`sha256(salt +
+password)`, matching `hashpass`'s old salted-SHA-256 scheme) with a single
+`--hash` once both `encred` and `hashpass` moved to bcrypt.
 
 ## hashpass
 
 Usage: `python3 -m myenc hashpass [-p <passphrase>]`. Implemented in
 `src/myenc/hashpass.py`.
 
-Derives a salted SHA-256 password hash: `sha256(salt + password)`. Unlike
-the original `bin/hashpass` shell script (fixed `SALT1`/`SALT2`
-constants, so the same password always hashed the same way), the salt is
-freshly random (`secrets.token_hex`) on every run, so the tool prints
-`salt:hexdigest` rather than just the digest — the salt is needed to
-reproduce or verify the hash later.
+Derives a bcrypt password hash (`bcrypt.hashpw` with a freshly random
+`bcrypt.gensalt()` salt on every run) and prints the resulting hash
+string. Unlike the original `bin/hashpass` shell script (fixed
+`SALT1`/`SALT2` constants, so the same password always hashed the same
+way) and this tool's earlier salted-SHA-256 implementation (which printed
+`salt:hexdigest`, since the salt had to be tracked separately), bcrypt
+embeds the salt and cost factor directly in the hash string, so that
+string alone — passed to `myenc encred --hash` — is enough to verify the
+password later.
 
 ## decred
 
