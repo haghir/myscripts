@@ -85,6 +85,18 @@ at once, regardless of message size.
   trip is available for regression-testing future changes here; a real
   RFC 9580–capable implementation may be needed, or fall back to the next
   point.
+- **Other third-party tools reject this output too, for the same reason as
+  `gpg` above** — it's not specific to that one dev build. E.g. the web tool
+  lockedpgp.com (likely OpenPGP.js-based) fails with "Error parsing SKESK V6
+  structure: Unsupported SKESK version 6." OpenPGP.js does implement RFC 9580
+  AEAD, but gates it behind `config.aeadProtect`, off by default in many
+  builds — and any implementation built before RFC 9580's 2024 finalization
+  won't recognize v6 SKESK / v2 SEIPD at all. Before treating a "can't
+  decrypt/parse" report from some other tool as an `encred`/`decred` bug,
+  check the packet structure against the RFC text directly (as was done here
+  for the SKESK v6 body/AD construction, section 5.3.2) rather than assuming
+  the third-party tool's rejection is authoritative — AEAD-capable RFC 9580
+  implementations are still the exception, not the rule, as of 2026.
 - **How this was actually validated**: before `decred` existed, an
   independent decryptor was hand-written straight from the RFC text (not
   by importing/reusing `encred`'s code) to round-trip against `encred`'s
