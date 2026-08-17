@@ -1,5 +1,8 @@
 #!/bin/bash
 
+BINDIR="$(dirname "${BASH_SOURCE[0]:-$0}")"
+PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
+
 ASCPATH="${1}"
 TXTPATH="${ASCPATH%.asc}.txt"
 
@@ -8,7 +11,7 @@ if [[ "${ASCPATH}.txt" == "${TXTPATH}" ]] ; then
 	exit 1
 fi
 
-if ! pytnon3 -m myenc decred -o "${TXTPATH}" "${ASCPATH}" ; then
+if ! "${PYTHON}" -m myenc decred -o "${TXTPATH}" "${ASCPATH}" ; then
 	echo "Failed to decrypt ${ASCPATH} -> ${TXTPATH}" 1>&2
 	exit 1
 fi

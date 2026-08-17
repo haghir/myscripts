@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Prints, to stdout, the path to a Python interpreter that has the myenc
+# package importable, and exits 0. If no such interpreter is found on
+# PATH, prints an error to stderr and exits 1.
+#
+# Set MYENC_PYTHON to force a specific interpreter, skipping the search.
+
+if [[ -n "${MYENC_PYTHON:-}" ]] ; then
+	if ! "${MYENC_PYTHON}" -c "import myenc" >/dev/null 2>&1 ; then
+		echo "MYENC_PYTHON=${MYENC_PYTHON} does not have the myenc package installed" 1>&2
+		exit 1
+	fi
+	echo "${MYENC_PYTHON}"
+	exit 0
+fi
+
+CANDIDATES=(python3 python python3.14 python3.13 python3.12 python3.11 python3.10)
+
+CHECKED=()
+for cmd in "${CANDIDATES[@]}" ; do
+	resolved="$(command -v -- "${cmd}" 2>/dev/null)" || continue
+
+	# Skip interpreters we've already tried under a different name.
+	already_checked=0
+	for seen in "${CHECKED[@]}" ; do
+		if [[ "${seen}" == "${resolved}" ]] ; then
+			already_checked=1
+			break
+		fi
+	done
+	[[ "${already_checked}" -eq 1 ]] && continue
+	CHECKED+=("${resolved}")
+
+	if "${resolved}" -c "import myenc" >/dev/null 2>&1 ; then
+		echo "${resolved}"
+		exit 0
+	fi
+done
+
+echo "No Python interpreter on PATH has the myenc package installed (tried: ${CANDIDATES[*]})" 1>&2
+echo "Set MYENC_PYTHON to the interpreter you want to use." 1>&2
+exit 1
