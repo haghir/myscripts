@@ -13,7 +13,7 @@ import argparse
 import getpass
 import sys
 
-import bcrypt
+from myenc import _bcrypt as bcrypt
 
 
 def hash_password(password: str) -> str:

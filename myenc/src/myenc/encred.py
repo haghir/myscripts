@@ -6,7 +6,9 @@ message (RFC 9580), using AES-256 in GCM mode.
 
 Only the "cryptography" package's AES-GCM and HKDF primitives are used; all
 OpenPGP packet framing, ASCII armor, string-to-key handling, and chunked-AEAD
-construction are implemented here rather than via a PGP/GnuPG library.
+construction are implemented here rather than via a PGP/GnuPG library. The
+optional `--hash` passphrase check uses this package's own from-scratch
+bcrypt implementation (`myenc._bcrypt`), not the `bcrypt` PyPI package.
 
 Output structure, per RFC 9580:
   - a version 6 Symmetric-Key Encrypted Session Key packet (Section 5.3.2),
@@ -29,10 +31,11 @@ import struct
 import sys
 from base64 import b64encode
 
-import bcrypt
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+from myenc import _bcrypt as bcrypt
 
 # --- OpenPGP registry constants used (RFC 9580 Section 9) ---
 SYM_ALGO_AES256 = 9

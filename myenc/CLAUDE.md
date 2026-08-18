@@ -24,12 +24,14 @@ Encrypted Session Key packet (Iterated & Salted S2K) wrapping a random
 session key, then a v2 SEIPD packet (chunked AES-256-GCM) containing a
 Literal Data packet with the payload. Dependencies: `cryptography`, used
 solely for the AES-GCM and HKDF primitives — all packet framing, S2K, and
-armor logic is hand-rolled against the RFC text — and `bcrypt`, used only
-for the optional `--hash` passphrase check below.
+armor logic is hand-rolled against the RFC text. Password hashing for the
+optional `--hash` check below uses `src/myenc/_bcrypt.py`, a from-scratch,
+pure-Python bcrypt (no compiled dependency — see that module's docstring),
+not the `bcrypt` PyPI package.
 
 `--hash` takes a bcrypt hash string as printed by `myenc hashpass`; if
 given, the passphrase (from `-p` or a single prompt) is checked with
-`bcrypt.checkpw` against that hash before encrypting, instead of asking
+`_bcrypt.checkpw` against that hash before encrypting, instead of asking
 for a second, confirmation entry — this is what lets `bin/encred` hard-code
 a known-good hash of the intended passphrase and abort with "Wrong
 password" on a typo, rather than silently encrypting under the wrong key.
@@ -42,8 +44,8 @@ password)`, matching `hashpass`'s old salted-SHA-256 scheme) with a single
 Usage: `python3 -m myenc hashpass [-p <passphrase>]`. Implemented in
 `src/myenc/hashpass.py`.
 
-Derives a bcrypt password hash (`bcrypt.hashpw` with a freshly random
-`bcrypt.gensalt()` salt on every run) and prints the resulting hash
+Derives a bcrypt password hash (`_bcrypt.hashpw` with a freshly random
+`_bcrypt.gensalt()` salt on every run) and prints the resulting hash
 string. Unlike the original `bin/hashpass` shell script (fixed
 `SALT1`/`SALT2` constants, so the same password always hashed the same
 way) and this tool's earlier salted-SHA-256 implementation (which printed
@@ -51,6 +53,36 @@ way) and this tool's earlier salted-SHA-256 implementation (which printed
 embeds the salt and cost factor directly in the hash string, so that
 string alone — passed to `myenc encred --hash` — is enough to verify the
 password later.
+
+### `_bcrypt.py`: pure-Python bcrypt
+
+`src/myenc/_bcrypt.py` implements bcrypt (Provos & Mazières'
+EksBlowfish-based scheme) from scratch — Blowfish cipher, its pi-digit
+P-array/S-box constants, the expensive salt-dependent key schedule, and
+bcrypt's own no-padding base64 variant — with no compiled dependency, so
+`encred`/`hashpass` keep working in environments where the `bcrypt`
+package can't be installed. It exposes the same `gensalt`/`hashpw`/
+`checkpw` names as the `bcrypt` package, so the call sites in
+`encred.py`/`hashpass.py` are otherwise unchanged (`from myenc import
+_bcrypt as bcrypt`).
+
+Being pure Python, it's far slower than a compiled bcrypt: several seconds
+per hash at the default cost factor (12) rather than tens of milliseconds.
+That's an accepted trade here, since both call sites hash/check a
+passphrase interactively, a handful of times per run — not in a
+high-throughput auth path.
+
+Validated (not merely trusted) by cross-checking against the real
+`bcrypt` package installed in a scratch environment for one-time
+comparison only, never added as a project dependency: hash equality
+across empty/short/72-byte/unicode/embedded-NUL passwords and multiple
+cost factors, plus cross-verification in both directions (each
+implementation's hash checked by the other's `checkpw`). If `_bcrypt.py`
+is ever modified, re-validate the same way rather than trusting that a
+self-consistent round trip (hash and check both via `_bcrypt.py`) proves
+correctness — the real risk is drifting from the standard algorithm while
+still agreeing with yourself, the same lesson as `decred`'s "check
+against a third source" note below.
 
 ## decred
 

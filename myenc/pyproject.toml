@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
   "cryptography",
-  "bcrypt",
 ]
 
 [project.urls]
