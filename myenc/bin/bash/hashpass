@@ -3,4 +3,13 @@
 BINDIR="$(dirname "${BASH_SOURCE[0]:-$0}")"
 PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
 
-"${PYTHON}" -m myenc hashpass "${@}"
+while true ; do
+	read -r -s -p "Password: " PASSWORD
+	echo 1>&2
+	read -r -s -p "Verify: " VERIFY
+	echo 1>&2
+	[[ "${PASSWORD}" == "${VERIFY}" ]] && break
+	echo "Passwords did not match, try again." 1>&2
+done
+
+"${PYTHON}" -m myenc hashpass -p "${PASSWORD}"

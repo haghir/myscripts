@@ -13,7 +13,7 @@ a matching dispatch branch.
 
 ## encred
 
-Usage: `python3 -m myenc encred [-o <output file>] [-p <passphrase>]
+Usage: `python3 -m myenc encred -p <passphrase> [-o <output file>]
 [--hash <bcrypt hash>] [<input file>]`. Implemented in
 `src/myenc/encred.py`.
 
@@ -30,18 +30,25 @@ pure-Python bcrypt (no compiled dependency — see that module's docstring),
 not the `bcrypt` PyPI package.
 
 `--hash` takes a bcrypt hash string as printed by `myenc hashpass`; if
-given, the passphrase (from `-p` or a single prompt) is checked with
-`_bcrypt.checkpw` against that hash before encrypting, instead of asking
-for a second, confirmation entry — this is what lets `bin/encred` hard-code
-a known-good hash of the intended passphrase and abort with "Wrong
-password" on a typo, rather than silently encrypting under the wrong key.
-This replaced an earlier `--salt`/`--digest` pair (`sha256(salt +
-password)`, matching `hashpass`'s old salted-SHA-256 scheme) with a single
-`--hash` once both `encred` and `hashpass` moved to bcrypt.
+given, `-p`'s passphrase is checked with `_bcrypt.checkpw` against that hash
+before encrypting — this is what lets `bin/bash/encred` hard-code a
+known-good hash of the intended passphrase and abort on a typo, rather than
+silently encrypting under the wrong key. This replaced an earlier
+`--salt`/`--digest` pair (`sha256(salt + password)`, matching `hashpass`'s
+old salted-SHA-256 scheme) with a single `--hash` once both `encred` and
+`hashpass` moved to bcrypt.
+
+`-p/--passphrase` is required and `encred`/`decred`/`hashpass` never prompt
+for it themselves (no `getpass` calls anywhere in `src/myenc/`): `getpass`
+needs a real TTY, which isn't available in every environment these run
+from — notably a-Shell on iOS. Interactive entry (and, for `hashpass`,
+confirming it twice) is instead the job of the `bin/bash/*` wrapper scripts,
+via bash's own `read -s`, which doesn't depend on a TTY the way `getpass`
+does.
 
 ## hashpass
 
-Usage: `python3 -m myenc hashpass [-p <passphrase>]`. Implemented in
+Usage: `python3 -m myenc hashpass -p <passphrase>`. Implemented in
 `src/myenc/hashpass.py`.
 
 Derives a bcrypt password hash (`_bcrypt.hashpw` with a freshly random
@@ -86,7 +93,7 @@ against a third source" note below.
 
 ## decred
 
-Usage: `python3 -m myenc decred [-o <output file>] [-p <passphrase>]
+Usage: `python3 -m myenc decred -p <passphrase> [-o <output file>]
 [<input file>]`. Implemented in `src/myenc/decred.py`; the inverse of
 `encred`. Reuses `encred`'s S2K/HKDF helpers and constants via import
 rather than reimplementing them (unlike the throwaway validation

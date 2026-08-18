@@ -11,7 +11,10 @@ if [[ "${ASCPATH}.txt" == "${TXTPATH}" ]] ; then
 	exit 1
 fi
 
-if ! "${PYTHON}" -m myenc decred -o "${TXTPATH}" "${ASCPATH}" ; then
+read -r -s -p "Passphrase: " PASSPHRASE
+echo 1>&2
+
+if ! "${PYTHON}" -m myenc decred -p "${PASSPHRASE}" -o "${TXTPATH}" "${ASCPATH}" ; then
 	echo "Failed to decrypt ${ASCPATH} -> ${TXTPATH}" 1>&2
 	exit 1
 fi

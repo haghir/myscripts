@@ -12,7 +12,10 @@ if [[ "${TXTPATH}.asc" == "${ASCPATH}" ]] ; then
 	exit 1
 fi
 
-if ! "${PYTHON}" -m myenc encred --hash "${HASH}" -o "${ASCPATH}" "${TXTPATH}" ; then
+read -r -s -p "Passphrase: " PASSPHRASE
+echo 1>&2
+
+if ! "${PYTHON}" -m myenc encred --hash "${HASH}" -p "${PASSPHRASE}" -o "${ASCPATH}" "${TXTPATH}" ; then
 	echo "Failed to encrypt ${TXTPATH} -> ${ASCPATH}" 1>&2
 	exit 1
 fi

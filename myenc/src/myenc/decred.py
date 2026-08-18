@@ -18,11 +18,14 @@ returns fewer than `n` bytes only at true end of stream. That lets the
 layers compose without ever materializing more than one armor line, one
 Partial Body Length segment, or one AEAD chunk (plus its one-chunk
 lookahead) in memory at a time, regardless of overall message size.
+
+The passphrase itself must be supplied via -p/--passphrase; this module
+does not prompt for it, for the same reason `encred` doesn't -- see that
+module's docstring.
 """
 
 import argparse
 import contextlib
-import getpass
 import sys
 from base64 import b64decode
 
@@ -330,26 +333,20 @@ def decrypt(input_stream, output_stream, passphrase: bytes) -> None:
         output_stream.write(block)
 
 
-def read_passphrase(supplied: str | None) -> bytes:
-    if supplied is not None:
-        return supplied.encode("utf-8")
-    return getpass.getpass("Passphrase: ").encode("utf-8")
-
-
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="myenc decred",
         description="Decrypt an ASCII-armored, AES-256-GCM OpenPGP symmetric message produced by encred.",
     )
     parser.add_argument("-o", "--output", metavar="FILE", help="output file path (default: stdout)")
-    parser.add_argument("-p", "--passphrase", metavar="PASSPHRASE", help="passphrase (default: prompt)")
+    parser.add_argument("-p", "--passphrase", required=True, metavar="PASSPHRASE", help="passphrase to decrypt with")
     parser.add_argument("input", nargs="?", metavar="FILE", help="input file path (default: stdin)")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    passphrase = read_passphrase(args.passphrase)
+    passphrase = args.passphrase.encode("utf-8")
 
     in_ctx = open(args.input, "r", encoding="ascii") if args.input else contextlib.nullcontext(sys.stdin)
     out_ctx = open(args.output, "wb") if args.output else contextlib.nullcontext(sys.stdout.buffer)

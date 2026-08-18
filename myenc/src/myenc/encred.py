@@ -10,6 +10,12 @@ construction are implemented here rather than via a PGP/GnuPG library. The
 optional `--hash` passphrase check uses this package's own from-scratch
 bcrypt implementation (`myenc._bcrypt`), not the `bcrypt` PyPI package.
 
+The passphrase itself must be supplied via -p/--passphrase; this module does
+not prompt for it. Entering (and, without --hash, confirming) it is left to
+the caller -- e.g. bash's `read -s` in `bin/bash/encred` -- since `getpass`'s
+TTY-based prompt doesn't work in every environment this runs from (notably
+a-Shell on iOS, which has no real TTY).
+
 Output structure, per RFC 9580:
   - a version 6 Symmetric-Key Encrypted Session Key packet (Section 5.3.2),
   - a version 2 Symmetrically Encrypted Integrity Protected Data packet
@@ -24,7 +30,6 @@ requires holding the whole thing in memory.
 
 import argparse
 import contextlib
-import getpass
 import hashlib
 import os
 import struct
@@ -272,24 +277,15 @@ def encrypt(input_stream, output_stream, passphrase: bytes) -> None:
                         literal.write(block)
 
 
-def read_passphrase(supplied: str | None, bcrypt_hash: str | None) -> bytes:
-    """If `bcrypt_hash` (as printed by `myenc hashpass`) is given, the
-    passphrase only needs to be entered once: it's checked against the hash
-    instead of a second, confirmation entry.
+def read_passphrase(supplied: str, bcrypt_hash: str | None) -> bytes:
+    """If `bcrypt_hash` (as printed by `myenc hashpass`) is given, `supplied`
+    is checked against it before use -- this is what lets a caller that
+    hard-codes a known-good hash (e.g. `bin/bash/encred`) catch a typo'd
+    passphrase instead of silently encrypting under the wrong key.
     """
-    if bcrypt_hash is not None:
-        passphrase = supplied if supplied is not None else getpass.getpass("Passphrase: ")
-        if not bcrypt.checkpw(passphrase.encode("utf-8"), bcrypt_hash.encode("ascii")):
-            raise ValueError("passphrase does not match the given hash")
-        return passphrase.encode("utf-8")
-    if supplied is not None:
-        return supplied.encode("utf-8")
-    while True:
-        first = getpass.getpass("Passphrase: ")
-        second = getpass.getpass("Confirm passphrase: ")
-        if first == second:
-            return first.encode("utf-8")
-        print("Passphrases did not match, try again.", file=sys.stderr)
+    if bcrypt_hash is not None and not bcrypt.checkpw(supplied.encode("utf-8"), bcrypt_hash.encode("ascii")):
+        raise ValueError("passphrase does not match the given hash")
+    return supplied.encode("utf-8")
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -298,11 +294,11 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         description="Encrypt a file or stdin as an ASCII-armored, AES-256-GCM OpenPGP symmetric message.",
     )
     parser.add_argument("-o", "--output", metavar="FILE", help="output file path (default: stdout)")
-    parser.add_argument("-p", "--passphrase", metavar="PASSPHRASE", help="passphrase (default: prompt and confirm)")
+    parser.add_argument("-p", "--passphrase", required=True, metavar="PASSPHRASE", help="passphrase to encrypt under")
     parser.add_argument(
         "--hash",
         metavar="BCRYPT_HASH",
-        help="bcrypt hash from `myenc hashpass` output; verifies the passphrase without a second prompt",
+        help="bcrypt hash from `myenc hashpass` output; verifies -p's passphrase against it before encrypting",
     )
     parser.add_argument("input", nargs="?", metavar="FILE", help="input file path (default: stdin)")
     return parser.parse_args(argv)

@@ -3,4 +3,7 @@
 BINDIR="$(dirname "${BASH_SOURCE[0]:-$0}")"
 PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
 
-"${PYTHON}" -m myenc decred  "${1}"
+read -r -s -p "Passphrase: " PASSPHRASE
+echo 1>&2
+
+"${PYTHON}" -m myenc decred -p "${PASSPHRASE}" "${1}"
