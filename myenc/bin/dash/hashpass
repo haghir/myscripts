@@ -1,0 +1,23 @@
+#!/bin/dash
+
+BINDIR="$(dirname "$0")"
+PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
+
+while true ; do
+	printf '%s' "Password: " 1>&2
+	stty -echo 2>/dev/null
+	read -r PASSWORD
+	stty echo 2>/dev/null
+	echo 1>&2
+
+	printf '%s' "Verify: " 1>&2
+	stty -echo 2>/dev/null
+	read -r VERIFY
+	stty echo 2>/dev/null
+	echo 1>&2
+
+	[ "${PASSWORD}" = "${VERIFY}" ] && break
+	echo "Passwords did not match, try again." 1>&2
+done
+
+"${PYTHON}" -m myenc hashpass -p "${PASSWORD}"

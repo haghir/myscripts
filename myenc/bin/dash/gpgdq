@@ -1,0 +1,12 @@
+#!/bin/dash
+
+BINDIR="$(dirname "$0")"
+PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
+
+printf '%s' "Passphrase: " 1>&2
+stty -echo 2>/dev/null
+read -r PASSPHRASE
+stty echo 2>/dev/null
+echo 1>&2
+
+"${PYTHON}" -m myenc decred -p "${PASSPHRASE}" "${1}"

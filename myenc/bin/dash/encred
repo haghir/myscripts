@@ -1,0 +1,27 @@
+#!/bin/dash
+
+BINDIR="$(dirname "$0")"
+PYTHON="$("${BINDIR}/find-myenc-python")" || exit 1
+
+TXTPATH="${1}"
+ASCPATH="${TXTPATH%.txt}.asc"
+HASH="passphrase bcrypt hash"
+
+if [ "${TXTPATH}.asc" = "${ASCPATH}" ] ; then
+	echo "Invalid file name: $TXTPATH" 1>&2
+	exit 1
+fi
+
+printf '%s' "Passphrase: " 1>&2
+stty -echo 2>/dev/null
+read -r PASSPHRASE
+stty echo 2>/dev/null
+echo 1>&2
+
+if ! "${PYTHON}" -m myenc encred --hash "${HASH}" -p "${PASSPHRASE}" -o "${ASCPATH}" "${TXTPATH}" ; then
+	echo "Failed to encrypt ${TXTPATH} -> ${ASCPATH}" 1>&2
+	exit 1
+fi
+
+chmod 444 "${ASCPATH}"
+rm -f "${TXTPATH}"
